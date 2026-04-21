@@ -495,6 +495,7 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ── AUTH ──────────────────────────────────────────────────────
 let currentUser = null;
+let currentToken = null;
 function showLogin()  { document.getElementById('login-screen').classList.remove('hidden'); }
 function hideLogin()  { document.getElementById('login-screen').classList.add('hidden'); }
 
@@ -514,7 +515,7 @@ async function doLogin() {
 }
 
 function doLogout() {
-    currentUser = null;
+    currentUser = null; currentToken = null;
     db.auth.signOut(); // fire and forget — don't await
     showLogin();
     document.getElementById('login-btn').disabled = false;
@@ -523,11 +524,12 @@ function doLogout() {
 }
 
 db.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session) {
+    if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
         currentUser = session.user;
-        await initApp();
+        currentToken = session.access_token;
+        if (event === 'SIGNED_IN') await initApp();
     } else if (event === 'SIGNED_OUT') {
-        currentUser = null;
+        currentUser = null; currentToken = null;
         showLogin();
         document.getElementById('login-btn').disabled = false;
         document.getElementById('login-btn').textContent = 'Sign In';
@@ -600,9 +602,9 @@ const dialGrid = document.getElementById('dial-grid');
 for (let i = 1; i <= 20; i++) {
     dialGrid.innerHTML += `<div class="dial-row" id="dr${i}">
         <span class="dial-num">${i}</span>
-        <input type="checkbox" onchange="updateDialProgress()">
+        <input type="checkbox" onchange="updateDialProgress();save()">
         <input type="text" placeholder="Name / Note">
-        <select onchange="applyDialStyle(${i},this.value);updateDialProgress()">
+        <select onchange="applyDialStyle(${i},this.value);updateDialProgress();save()">
             <option value="VM">VM</option><option value="NA">No Ans</option>
             <option value="CONVO">Convo</option><option value="SENT">Sent</option><option value="NI">Not Int</option>
         </select></div>`;
@@ -805,22 +807,30 @@ function save() {
     cloudSaveTimer = setTimeout(() => saveToCloud(data), 800);
 }
 async function saveToCloud(data) {
-    if (!currentUser) { setSyncDot(''); return; }
+    if (!currentUser || !currentToken) { setSyncDot(''); return; }
     if (location.protocol === 'file:') { setSyncDot('synced'); setTimeout(() => setSyncDot(''), 2000); return; }
     try {
-        const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000));
-        const upsert  = db.from('dashboard_state')
-            .upsert({ user_id: currentUser.id, data, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
-        const { error } = await Promise.race([upsert, timeout]);
-        if (error) {
-            console.error('Supabase save error:', error.message, error);
-            setSyncDot('error');
-        } else {
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/dashboard_state`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${currentToken}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates,return=minimal'
+            },
+            body: JSON.stringify({ user_id: currentUser.id, data, updated_at: new Date().toISOString() }),
+            signal: AbortSignal.timeout(8000)
+        });
+        if (resp.ok) {
             setSyncDot('synced');
             setTimeout(() => setSyncDot(''), 3000);
+        } else {
+            const msg = await resp.text();
+            console.error('Save failed:', resp.status, msg);
+            setSyncDot('error');
         }
-    } catch (e) {
-        console.error('Cloud save exception:', e.message);
+    } catch(e) {
+        console.error('Save exception:', e.message);
         setSyncDot('error');
     }
 }
@@ -828,12 +838,18 @@ async function saveToCloud(data) {
 // Load: pick whichever of Supabase or localStorage is newer
 async function loadData() {
     let cloudData = null;
-    if (currentUser && location.protocol !== 'file:') {
+    if (currentUser && currentToken && location.protocol !== 'file:') {
         try {
-            const { data, error } = await db.from('dashboard_state').select('data').eq('user_id', currentUser.id).single();
-            if (error && error.code !== 'PGRST116') console.error('Load cloud error:', error.message);
-            else if (data?.data) cloudData = data.data;
-        } catch(e) { console.error('Load cloud exception:', e.message); }
+            const resp = await fetch(
+                `${SUPABASE_URL}/rest/v1/dashboard_state?select=data&user_id=eq.${currentUser.id}`,
+                { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentToken}` },
+                  signal: AbortSignal.timeout(8000) }
+            );
+            if (resp.ok) {
+                const rows = await resp.json();
+                if (rows.length > 0 && rows[0].data) cloudData = rows[0].data;
+            } else console.error('Load failed:', resp.status, await resp.text());
+        } catch(e) { console.error('Load exception:', e.message); }
     }
 
     let localData = null;
@@ -897,13 +913,17 @@ window.onload = async () => {
     const { data: { session } } = await db.auth.getSession();
     if (session) {
         currentUser = session.user;
+        currentToken = session.access_token;
         await initApp();
     } else {
         showLogin();
     }
 };
 document.addEventListener('input', save);
-document.addEventListener('change', save);
+document.addEventListener('change', e => {
+    // only save on checkbox/select changes — not file inputs or other controls
+    if (e.target.type === 'checkbox' || e.target.tagName === 'SELECT') save();
+});
 </script>
 </body>
 </html>
