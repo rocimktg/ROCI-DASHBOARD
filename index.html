@@ -494,7 +494,13 @@ async function doLogin() {
 }
 
 async function doLogout() {
-    await db.auth.signOut();
+    const { error } = await db.auth.signOut();
+    if (error) console.error('Sign out error:', error);
+    // Force UI reset regardless of Supabase response
+    showLogin();
+    document.getElementById('login-btn').disabled = false;
+    document.getElementById('login-btn').textContent = 'Sign In';
+    document.getElementById('login-pass').value = '';
 }
 
 db.auth.onAuthStateChange(async (event, session) => {
