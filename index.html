@@ -191,14 +191,16 @@
         .task input { cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
 
         /* TO-DO TAB */
-        #tab-todo { padding-right: 2px; }
-        .todo-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
-        .todo-input { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; }
+        #tab-todo.active { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; overflow: hidden; }
+        .todo-col { display: flex; flex-direction: column; overflow-y: auto; min-width: 0; }
+        .todo-col-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 1px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .todo-add-row { display: flex; gap: 8px; margin-bottom: 10px; flex-shrink: 0; }
+        .todo-input { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 8px; font-size: 12px; outline: none; font-family: inherit; min-width: 0; }
         .todo-input:focus { border-color: var(--accent); }
-        .todo-add-btn { background: var(--accent); color: #0b0f1a; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 800; font-family: inherit; white-space: nowrap; }
+        .todo-add-btn { background: var(--accent); color: #0b0f1a; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 800; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
         .todo-add-btn:hover { background: #7dd3fc; }
         .todo-list { display: flex; flex-direction: column; gap: 4px; }
-        .todo-item { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); padding: 9px 12px; border-radius: 8px; font-size: 13px; transition: border-color 0.15s; }
+        .todo-item { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); padding: 8px 10px; border-radius: 8px; font-size: 12px; transition: border-color 0.15s; }
         .todo-item:hover { border-color: #334155; }
         .todo-item input { cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
         .todo-item span { flex: 1; }
@@ -206,7 +208,7 @@
         .todo-del { opacity: 0; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; transition: opacity 0.15s, color 0.15s; }
         .todo-item:hover .todo-del { opacity: 1; }
         .todo-del:hover { color: var(--danger); }
-        .done-header { display: none; align-items: center; gap: 8px; margin-top: 14px; margin-bottom: 8px; cursor: pointer; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; user-select: none; }
+        .done-header { display: none; align-items: center; gap: 8px; margin-top: 12px; margin-bottom: 6px; cursor: pointer; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; user-select: none; flex-shrink: 0; }
         .done-header:hover { color: var(--text); }
         .done-badge { background: #1e293b; color: var(--muted); border-radius: 10px; padding: 1px 7px; font-size: 10px; }
         .done-list { display: none; flex-direction: column; gap: 4px; }
@@ -420,16 +422,32 @@
 
     <!-- TO-DO -->
     <div class="tab-pane" id="tab-todo">
-        <div class="todo-add-row">
-            <input class="todo-input" id="todo-input" type="text" placeholder="Add a task..."
-                onkeydown="if(event.key==='Enter') submitTodo()">
-            <button class="todo-add-btn" onclick="submitTodo()">Add</button>
+        <div class="todo-col">
+            <div class="todo-col-label">Work</div>
+            <div class="todo-add-row">
+                <input class="todo-input" id="work-input" type="text" placeholder="Add work task..."
+                    onkeydown="if(event.key==='Enter') submitTodo('work')">
+                <button class="todo-add-btn" onclick="submitTodo('work')">Add</button>
+            </div>
+            <div class="todo-list" id="work-active"></div>
+            <div class="done-header" id="work-done-header" onclick="toggleDoneSection('work')">
+                <span id="work-done-arrow">▶</span><span>Done</span><span class="done-badge" id="work-done-count">0</span>
+            </div>
+            <div class="done-list" id="work-done"></div>
         </div>
-        <div class="todo-list" id="todo-active"></div>
-        <div class="done-header" id="done-header" onclick="toggleDoneSection()">
-            <span id="done-arrow">▶</span><span>Done</span><span class="done-badge" id="done-count">0</span>
+        <div class="todo-col">
+            <div class="todo-col-label">Personal</div>
+            <div class="todo-add-row">
+                <input class="todo-input" id="personal-input" type="text" placeholder="Add personal task..."
+                    onkeydown="if(event.key==='Enter') submitTodo('personal')">
+                <button class="todo-add-btn" onclick="submitTodo('personal')">Add</button>
+            </div>
+            <div class="todo-list" id="personal-active"></div>
+            <div class="done-header" id="personal-done-header" onclick="toggleDoneSection('personal')">
+                <span id="personal-done-arrow">▶</span><span>Done</span><span class="done-badge" id="personal-done-count">0</span>
+            </div>
+            <div class="done-list" id="personal-done"></div>
         </div>
-        <div class="done-list" id="todo-done"></div>
     </div>
 
 </div>
@@ -657,36 +675,50 @@ COLS.forEach(colId => {
 });
 
 // ── TO-DO ─────────────────────────────────────────────────────
-let todos = [], nextId = 1, doneOpen = false;
-function submitTodo() {
-    const inp = document.getElementById('todo-input');
+let workTodos = [], personalTodos = [], nextId = 1;
+let workDoneOpen = false, personalDoneOpen = false;
+
+function getTodoList(type) { return type === 'work' ? workTodos : personalTodos; }
+function setTodoList(type, arr) { if (type === 'work') workTodos = arr; else personalTodos = arr; }
+
+function submitTodo(type) {
+    const inp = document.getElementById(type + '-input');
     const text = inp.value.trim(); if (!text) return;
-    todos.push({ id: nextId++, text, done: false });
+    getTodoList(type).push({ id: nextId++, text, done: false });
     inp.value = ''; renderTodos(); save();
 }
-function toggleTodo(id) { const t = todos.find(x=>x.id===id); if(t){t.done=!t.done;renderTodos();save();} }
-function deleteTodo(id) { todos=todos.filter(x=>x.id!==id); renderTodos(); save(); }
-function makeTodoEl(t) {
-    const div = document.createElement('div'); div.className='todo-item'+(t.done?' done':'');
-    const cb = document.createElement('input'); cb.type='checkbox'; cb.checked=t.done; cb.onchange=()=>toggleTodo(t.id);
-    const sp = document.createElement('span'); sp.textContent=t.text;
-    const dl = document.createElement('button'); dl.className='todo-del'; dl.textContent='×'; dl.onclick=()=>deleteTodo(t.id);
-    div.append(cb,sp,dl); return div;
+function toggleTodo(type, id) {
+    const t = getTodoList(type).find(x => x.id === id);
+    if (t) { t.done = !t.done; renderTodos(); save(); }
 }
-function renderTodos() {
-    const active=todos.filter(t=>!t.done), done=todos.filter(t=>t.done);
-    const al=document.getElementById('todo-active'); al.innerHTML='';
-    active.forEach(t=>al.appendChild(makeTodoEl(t)));
-    const dl=document.getElementById('todo-done'); dl.innerHTML='';
-    done.forEach(t=>dl.appendChild(makeTodoEl(t)));
-    const hdr=document.getElementById('done-header');
-    hdr.style.display=done.length?'flex':'none';
-    document.getElementById('done-count').textContent=done.length;
+function deleteTodo(type, id) {
+    setTodoList(type, getTodoList(type).filter(x => x.id !== id));
+    renderTodos(); save();
 }
-function toggleDoneSection() {
-    doneOpen=!doneOpen;
-    document.getElementById('todo-done').classList.toggle('open',doneOpen);
-    document.getElementById('done-arrow').textContent=doneOpen?'▼':'▶';
+function makeTodoEl(type, t) {
+    const div = document.createElement('div'); div.className = 'todo-item' + (t.done ? ' done' : '');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = t.done;
+    cb.onchange = () => toggleTodo(type, t.id);
+    const sp = document.createElement('span'); sp.textContent = t.text;
+    const dl = document.createElement('button'); dl.className = 'todo-del'; dl.textContent = '×';
+    dl.onclick = () => deleteTodo(type, t.id);
+    div.append(cb, sp, dl); return div;
+}
+function renderTodoCol(type) {
+    const list = getTodoList(type);
+    const active = list.filter(t => !t.done), done = list.filter(t => t.done);
+    const al = document.getElementById(type + '-active'); al.innerHTML = '';
+    active.forEach(t => al.appendChild(makeTodoEl(type, t)));
+    const dl = document.getElementById(type + '-done'); dl.innerHTML = '';
+    done.forEach(t => dl.appendChild(makeTodoEl(type, t)));
+    const hdr = document.getElementById(type + '-done-header');
+    hdr.style.display = done.length ? 'flex' : 'none';
+    document.getElementById(type + '-done-count').textContent = done.length;
+}
+function renderTodos() { renderTodoCol('work'); renderTodoCol('personal'); }
+function toggleDoneSection(type) {
+    if (type === 'work') { workDoneOpen = !workDoneOpen; document.getElementById('work-done').classList.toggle('open', workDoneOpen); document.getElementById('work-done-arrow').textContent = workDoneOpen ? '▼' : '▶'; }
+    else { personalDoneOpen = !personalDoneOpen; document.getElementById('personal-done').classList.toggle('open', personalDoneOpen); document.getElementById('personal-done-arrow').textContent = personalDoneOpen ? '▼' : '▶'; }
 }
 
 // ── PERSISTENCE ───────────────────────────────────────────────
@@ -695,13 +727,14 @@ const WT_IDS = ['wt0','wt1','wt2','wt3','wt4','wt5','wt6','wt7','wt8','wt9','wt1
 function gatherData() {
     return {
         v: '3.3',
+        savedAt:      Date.now(),
         stats:        [1,2,3,4,5].map(i => { const el=document.getElementById('s'+i); return el.tagName==='INPUT'?el.value:el.textContent; }),
         kanban:       kanbanCards,
         weekChecks:   WT_IDS.map(id => { const el=document.getElementById(id); return el?el.checked:false; }),
         dialChecks:   Array.from(document.querySelectorAll('.dial-row input[type="checkbox"]')).map(c=>c.checked),
         dialTexts:    Array.from(document.querySelectorAll('.dial-row input[type="text"]')).map(t=>t.value),
         dialOutcomes: Array.from(document.querySelectorAll('.dial-row select')).map(s=>s.value),
-        todos, nextId
+        workTodos, personalTodos, nextId
     };
 }
 
@@ -722,8 +755,10 @@ function applyData(data) {
     (data.dialTexts||data.texts||[]).forEach((v,i) => { if(dTxts[i]) dTxts[i].value=v; });
     const dSels = document.querySelectorAll('.dial-row select');
     (data.dialOutcomes||data.outcomes||[]).forEach((v,i) => { if(dSels[i]){dSels[i].value=v;applyDialStyle(i+1,v);} });
-    if (data.todos) todos=data.todos;
-    if (data.nextId) nextId=data.nextId;
+    if (data.workTodos) workTodos = data.workTodos;
+    if (data.personalTodos) personalTodos = data.personalTodos;
+    if (!data.workTodos && data.todos) workTodos = data.todos; // migrate legacy single-list
+    if (data.nextId) nextId = data.nextId;
     renderTodos(); updateDialProgress(); updateScoreboard();
 }
 
@@ -749,24 +784,35 @@ async function saveToCloud(data) {
     setTimeout(() => setSyncDot(''), 3000);
 }
 
-// Load: try Supabase first, fall back to localStorage
+// Load: pick whichever of Supabase or localStorage is newer
 async function loadData() {
+    let cloudData = null;
     const { data: { user } } = await db.auth.getUser();
     if (user) {
         const { data, error } = await db.from('dashboard_state').select('data').eq('user_id', user.id).single();
-        if (!error && data?.data) {
-            applyData(data.data);
-            localStorage.setItem('rocinante_v3_3', JSON.stringify(data.data));
-            setSyncDot('synced'); setTimeout(() => setSyncDot(''), 3000);
-            return;
-        }
+        if (!error && data?.data) cloudData = data.data;
     }
-    // Fall back to localStorage (or start fresh)
+
+    let localData = null;
     for (const key of ['rocinante_v3_3','rocinante_v3_2','rocinante_v3_1']) {
         const raw = localStorage.getItem(key);
-        if (raw) { try { applyData(JSON.parse(raw)); return; } catch(e){} }
+        if (raw) { try { localData = JSON.parse(raw); break; } catch(e){} }
     }
-    COLS.forEach(c => renderColumn(c));
+
+    // Use whichever copy has the later timestamp — protects against
+    // the cloud being behind when the tab was closed before the 2s debounce fired
+    let best = cloudData || localData;
+    if (cloudData && localData) {
+        best = (localData.savedAt || 0) > (cloudData.savedAt || 0) ? localData : cloudData;
+    }
+
+    if (best) {
+        applyData(best);
+        localStorage.setItem('rocinante_v3_3', JSON.stringify(best));
+        if (cloudData) { setSyncDot('synced'); setTimeout(() => setSyncDot(''), 3000); }
+    } else {
+        COLS.forEach(c => renderColumn(c));
+    }
 }
 
 function exportData() {
