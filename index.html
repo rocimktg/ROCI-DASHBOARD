@@ -527,9 +527,11 @@ db.auth.onAuthStateChange(async (event, session) => {
     if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
         currentUser = session.user;
         currentToken = session.access_token;
-        if (event === 'SIGNED_IN') await initApp();
+        // SIGNED_IN fires on page load too — window.onload already handles that case
+        // Only call initApp() here for explicit logins (no existing session yet)
+        if (event === 'SIGNED_IN' && !appReady) await initApp();
     } else if (event === 'SIGNED_OUT') {
-        currentUser = null; currentToken = null;
+        currentUser = null; currentToken = null; appReady = false; dataLoaded = false;
         showLogin();
         document.getElementById('login-btn').disabled = false;
         document.getElementById('login-btn').textContent = 'Sign In';
@@ -537,9 +539,14 @@ db.auth.onAuthStateChange(async (event, session) => {
     }
 });
 
+let appReady   = false; // guards against double-init on page load
+let dataLoaded = false; // blocks save() until load is complete
+
 async function initApp() {
+    appReady = true;
     hideLogin();
     await loadData();
+    dataLoaded = true;
     buildTodayPanel();
 }
 
@@ -800,6 +807,7 @@ function setSyncDot(state) {
     dot.textContent = labels[state] || 'Idle';
 }
 function save() {
+    if (!dataLoaded) return;
     const data = gatherData();
     localStorage.setItem('rocinante_v3_3', JSON.stringify(data));
     setSyncDot('syncing');
