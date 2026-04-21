@@ -494,6 +494,7 @@ const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ── AUTH ──────────────────────────────────────────────────────
+let currentUser = null;
 function showLogin()  { document.getElementById('login-screen').classList.remove('hidden'); }
 function hideLogin()  { document.getElementById('login-screen').classList.add('hidden'); }
 
@@ -512,10 +513,9 @@ async function doLogin() {
     // on success, onAuthStateChange fires → initApp()
 }
 
-async function doLogout() {
-    const { error } = await db.auth.signOut();
-    if (error) console.error('Sign out error:', error);
-    // Force UI reset regardless of Supabase response
+function doLogout() {
+    currentUser = null;
+    db.auth.signOut(); // fire and forget — don't await
     showLogin();
     document.getElementById('login-btn').disabled = false;
     document.getElementById('login-btn').textContent = 'Sign In';
@@ -524,8 +524,10 @@ async function doLogout() {
 
 db.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session) {
+        currentUser = session.user;
         await initApp();
     } else if (event === 'SIGNED_OUT') {
+        currentUser = null;
         showLogin();
         document.getElementById('login-btn').disabled = false;
         document.getElementById('login-btn').textContent = 'Sign In';
@@ -803,11 +805,13 @@ function save() {
     cloudSaveTimer = setTimeout(() => saveToCloud(data), 800);
 }
 async function saveToCloud(data) {
+    if (!currentUser) { setSyncDot(''); return; }
+    if (location.protocol === 'file:') { setSyncDot('synced'); setTimeout(() => setSyncDot(''), 2000); return; }
     try {
-        const { data: { user } } = await db.auth.getUser();
-        if (!user) { setSyncDot(''); return; }
-        const { error } = await db.from('dashboard_state')
-            .upsert({ user_id: user.id, data, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+        const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000));
+        const upsert  = db.from('dashboard_state')
+            .upsert({ user_id: currentUser.id, data, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+        const { error } = await Promise.race([upsert, timeout]);
         if (error) {
             console.error('Supabase save error:', error.message, error);
             setSyncDot('error');
@@ -816,7 +820,7 @@ async function saveToCloud(data) {
             setTimeout(() => setSyncDot(''), 3000);
         }
     } catch (e) {
-        console.error('Cloud save exception:', e);
+        console.error('Cloud save exception:', e.message);
         setSyncDot('error');
     }
 }
@@ -824,10 +828,12 @@ async function saveToCloud(data) {
 // Load: pick whichever of Supabase or localStorage is newer
 async function loadData() {
     let cloudData = null;
-    const { data: { user } } = await db.auth.getUser();
-    if (user) {
-        const { data, error } = await db.from('dashboard_state').select('data').eq('user_id', user.id).single();
-        if (!error && data?.data) cloudData = data.data;
+    if (currentUser && location.protocol !== 'file:') {
+        try {
+            const { data, error } = await db.from('dashboard_state').select('data').eq('user_id', currentUser.id).single();
+            if (error && error.code !== 'PGRST116') console.error('Load cloud error:', error.message);
+            else if (data?.data) cloudData = data.data;
+        } catch(e) { console.error('Load cloud exception:', e.message); }
     }
 
     let localData = null;
@@ -844,7 +850,7 @@ async function loadData() {
     }
 
     if (best) {
-        applyData(best);
+        try { applyData(best); } catch(e) { console.error('applyData error:', e); }
         localStorage.setItem('rocinante_v3_3', JSON.stringify(best));
         if (cloudData) { setSyncDot('synced'); setTimeout(() => setSyncDot(''), 3000); }
     } else {
@@ -890,6 +896,7 @@ window.onload = async () => {
     // Check for existing session (auto-login if token is still valid)
     const { data: { session } } = await db.auth.getSession();
     if (session) {
+        currentUser = session.user;
         await initApp();
     } else {
         showLogin();
