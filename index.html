@@ -31,6 +31,41 @@
         body {
             font-family: -apple-system, system-ui, sans-serif;
             background: var(--bg); color: var(--text);
+            display: flex; flex-direction: row;
+            height: 100vh; overflow: hidden; margin: 0; padding: 0;
+        }
+        .schedule-sidebar {
+            width: 235px; flex-shrink: 0;
+            height: 100vh; overflow-y: auto;
+            background: #0b1120; border-right: 1px solid var(--border);
+            padding: 14px 10px 14px 12px;
+            display: flex; flex-direction: column; gap: 0;
+        }
+        .schedule-sidebar::-webkit-scrollbar { width: 3px; }
+        .schedule-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .sched-title {
+            font-size: 9px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1.5px; color: var(--accent); margin-bottom: 10px;
+            padding-bottom: 6px; border-bottom: 1px solid var(--border);
+        }
+        .sched-block { margin-bottom: 0; }
+        .sched-time {
+            font-size: 9px; font-weight: 700; color: var(--warning);
+            text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.3;
+            margin-bottom: 2px;
+        }
+        .sched-label {
+            font-size: 10px; font-weight: 700; color: var(--text);
+            line-height: 1.3; margin-bottom: 3px;
+        }
+        .sched-detail {
+            font-size: 9.5px; color: var(--muted); line-height: 1.5;
+        }
+        .sched-divider { border: none; border-top: 1px solid var(--border); margin: 5px 0 5px; }
+        body.light .schedule-sidebar { background: #f1f5f9; border-color: #cbd5e1; }
+        body.light .sched-detail { color: #64748b; }
+        .main-content {
+            flex: 1; min-width: 0;
             display: flex; flex-direction: column; gap: 10px;
             padding: 14px 18px 68px; height: 100vh; overflow: hidden;
         }
@@ -234,7 +269,7 @@
         .done-list.open { display: flex; }
 
         /* FOOTER */
-        .footer-tools { position: fixed; bottom: 16px; left: 18px; right: 18px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+        .footer-tools { position: fixed; bottom: 16px; left: 253px; right: 18px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
         .btn-group { display: flex; gap: 8px; pointer-events: auto; align-items: center; }
         button.fbtn, .file-label {
             background: #1e293b; color: white; border: 1px solid var(--border);
@@ -292,7 +327,82 @@
     </div>
 </div>
 
+<!-- SCHEDULE SIDEBAR -->
+<div class="schedule-sidebar">
+    <div class="sched-title">Daily Schedule</div>
+
+    <div class="sched-block">
+        <div class="sched-time">9:00 – 9:30 AM</div>
+        <div class="sched-label">Command Center</div>
+        <div class="sched-detail">Coffee, Pipedrive review<br>Check overnight replies (email, LinkedIn, FB)<br>Identify today's 2 mockup targets<br>Respond to anything urgent<br>Note follow-up windows today</div>
+    </div>
+    <hr class="sched-divider">
+
+    <div class="sched-block">
+        <div class="sched-time">9:30 – 11:30 AM</div>
+        <div class="sched-label">Mockup Build #1</div>
+        <div class="sched-detail">Recon (15 min) → Content assembly (30 min) → Build (60 min) → Deploy (15 min)<br>Target: 1 mockup live on Netlify<br>Queue Touch 1 email</div>
+    </div>
+    <hr class="sched-divider">
+
+    <div class="sched-block">
+        <div class="sched-time">11:30 AM – 12:00 PM</div>
+        <div class="sched-label">Follow-Up Sweep</div>
+        <div class="sched-detail">Send Touch 2/3/4/5 emails due today<br>Reply to morning responses<br>Log dispositions in Pipedrive</div>
+    </div>
+    <hr class="sched-divider">
+
+    <div class="sched-block">
+        <div class="sched-time">12:00 – 1:00 PM</div>
+        <div class="sched-label">Lunch + Reset</div>
+        <div class="sched-detail"></div>
+    </div>
+    <hr class="sched-divider">
+
+    <div class="sched-block">
+        <div class="sched-time">1:00 – 3:00 PM</div>
+        <div class="sched-label">Mockup Build #2</div>
+        <div class="sched-detail">Second mockup of the day<br>Deploy + Touch 1 queued, not sent yet</div>
+    </div>
+    <hr class="sched-divider">
+
+    <div class="sched-block">
+        <div class="sched-time">3:00 – 5:00 PM</div>
+        <div class="sched-label">CALL BLOCK</div>
+        <div class="sched-detail">Send Mockup #2 Touch 1 at 3:00 PM sharp<br>20 cold dials minimum<br>Call mockup-ready prospects first<br>Then warm follow-ups from Touch sequences<br>Log every call in Pipedrive before next</div>
+    </div>
+    <hr class="sched-divider">
+
+    <div class="sched-block">
+        <div class="sched-time">5:00 – 6:00 PM</div>
+        <div class="sched-label">Dinner / Family Break</div>
+        <div class="sched-detail"></div>
+    </div>
+    <hr class="sched-divider">
+
+    <div class="sched-block">
+        <div class="sched-time">6:00 – 8:00 PM</div>
+        <div class="sched-label">Active Client Work</div>
+        <div class="sched-detail">Current build progress<br>Edits, revisions, client comms<br>Deploy updates, send progress reports</div>
+    </div>
+    <hr class="sched-divider">
+
+    <div class="sched-block">
+        <div class="sched-time">8:00 – 9:00 PM</div>
+        <div class="sched-label">Content + Close-Out</div>
+        <div class="sched-detail"><strong style="color:var(--accent)">Mon:</strong> FB post #1 + referral text<br><strong style="color:var(--accent)">Tue:</strong> Shoot — 3–4 shorts + long-form<br><strong style="color:var(--accent)">Wed:</strong> Edit + schedule Meta, TikTok, YT<br><strong style="color:var(--accent)">Thu:</strong> Partnership outreach + long-form edit<br><strong style="color:var(--accent)">Fri:</strong> FB post #2 + weekly review</div>
+    </div>
+    <hr class="sched-divider">
+
+    <div class="sched-block">
+        <div class="sched-time">9:00 PM</div>
+        <div class="sched-label">Shutdown</div>
+        <div class="sched-detail">Turn off computer</div>
+    </div>
+</div>
+
 <!-- APP -->
+<div class="main-content">
 <div class="scoreboard">
     <div class="stat"><div id="s1" class="stat-val">0</div><span class="stat-label">Convos (Week)</span></div>
     <div class="stat"><div id="s2" class="stat-val">0</div><span class="stat-label">Mockups Sent</span></div>
@@ -470,6 +580,7 @@
     </div>
 
 </div>
+</div><!-- /.main-content -->
 
 <div class="footer-tools">
     <div class="btn-group">
