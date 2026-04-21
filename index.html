@@ -800,15 +800,20 @@ function save() {
     localStorage.setItem('rocinante_v3_3', JSON.stringify(data));
     setSyncDot('syncing');
     clearTimeout(cloudSaveTimer);
-    cloudSaveTimer = setTimeout(() => saveToCloud(data), 2000);
+    cloudSaveTimer = setTimeout(() => saveToCloud(data), 800);
 }
 async function saveToCloud(data) {
-    const { data: { user } } = await db.auth.getUser();
-    if (!user) return;
-    const { error } = await db.from('dashboard_state')
-        .upsert({ user_id: user.id, data, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
-    setSyncDot(error ? 'error' : 'synced');
-    if (!error) setTimeout(() => setSyncDot(''), 4000);
+    try {
+        const { data: { user } } = await db.auth.getUser();
+        if (!user) { setSyncDot(''); return; }
+        const { error } = await db.from('dashboard_state')
+            .upsert({ user_id: user.id, data, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+        setSyncDot(error ? 'error' : 'synced');
+        if (!error) setTimeout(() => setSyncDot(''), 3000);
+    } catch (e) {
+        console.error('Cloud save failed:', e);
+        setSyncDot('error');
+    }
 }
 
 // Load: pick whichever of Supabase or localStorage is newer
