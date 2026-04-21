@@ -62,13 +62,32 @@
         .login-btn:hover { opacity: 0.85; }
         .login-btn:disabled { opacity: 0.5; cursor: default; }
         .login-error { color: var(--danger); font-size: 12px; text-align: center; min-height: 16px; }
-        .sync-dot {
-            width: 6px; height: 6px; border-radius: 50%; background: var(--muted);
-            display: inline-block; margin-left: 6px; vertical-align: middle;
-            transition: background 0.3s;
+        .sync-status {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+            border: 1px solid transparent; transition: background 0.3s, border-color 0.3s, color 0.3s;
+            background: transparent; color: var(--muted); border-color: var(--border);
+            letter-spacing: 0.03em; user-select: none;
         }
-        .sync-dot.syncing { background: var(--warning); }
-        .sync-dot.synced  { background: var(--success); }
+        .sync-status::before {
+            content: ''; width: 6px; height: 6px; border-radius: 50%;
+            background: var(--muted); flex-shrink: 0; transition: background 0.3s;
+        }
+        .sync-status.syncing {
+            background: rgba(234,179,8,0.12); color: #ca8a04; border-color: #ca8a04;
+        }
+        .sync-status.syncing::before { background: #ca8a04; }
+        .sync-status.synced {
+            background: rgba(34,197,94,0.12); color: #16a34a; border-color: #16a34a;
+        }
+        .sync-status.synced::before { background: #16a34a; }
+        .sync-status.error {
+            background: rgba(239,68,68,0.12); color: #dc2626; border-color: #dc2626;
+        }
+        .sync-status.error::before { background: #dc2626; }
+        body.light .sync-status.syncing { background: rgba(234,179,8,0.15); }
+        body.light .sync-status.synced  { background: rgba(34,197,94,0.15); }
+        body.light .sync-status.error   { background: rgba(239,68,68,0.15); }
 
         /* SCOREBOARD */
         .scoreboard {
@@ -457,7 +476,7 @@
         <button class="fbtn" onclick="exportData()">Backup</button>
         <label class="file-label">Load <input type="file" onchange="importData(event)" style="display:none"></label>
         <button class="fbtn" id="theme-btn" onclick="toggleTheme()">☀ Light</button>
-        <span class="sync-dot" id="sync-dot" title="Sync status"></span>
+        <span class="sync-status" id="sync-dot">Idle</span>
     </div>
     <div class="btn-group">
         <button class="fbtn" onclick="doLogout()">Sign Out</button>
@@ -772,7 +791,9 @@ function applyData(data) {
 let cloudSaveTimer;
 function setSyncDot(state) {
     const dot = document.getElementById('sync-dot');
-    dot.className = 'sync-dot' + (state ? ' ' + state : '');
+    const labels = { syncing: 'Saving…', synced: 'Saved', error: 'Save Failed' };
+    dot.className = 'sync-status' + (state ? ' ' + state : '');
+    dot.textContent = labels[state] || 'Idle';
 }
 function save() {
     const data = gatherData();
@@ -786,8 +807,8 @@ async function saveToCloud(data) {
     if (!user) return;
     const { error } = await db.from('dashboard_state')
         .upsert({ user_id: user.id, data, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
-    setSyncDot(error ? '' : 'synced');
-    setTimeout(() => setSyncDot(''), 3000);
+    setSyncDot(error ? 'error' : 'synced');
+    if (!error) setTimeout(() => setSyncDot(''), 4000);
 }
 
 // Load: pick whichever of Supabase or localStorage is newer
