@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rocinante Revenue Engine</title>
+    <title>Rocinante Task Dashboard</title>
     <!--
     SUPABASE SETUP — run this SQL in your Supabase project (SQL Editor):
 
@@ -32,7 +32,7 @@
             font-family: -apple-system, system-ui, sans-serif;
             background: var(--bg); color: var(--text);
             display: flex; flex-direction: row;
-            height: 100vh; overflow: hidden; margin: 0; padding: 0;
+            min-height: 100vh; overflow: hidden; margin: 0; padding: 0;
         }
         .schedule-sidebar {
             width: 235px; flex-shrink: 0;
@@ -67,7 +67,7 @@
         .main-content {
             flex: 1; min-width: 0;
             display: flex; flex-direction: column; gap: 10px;
-            padding: 14px 18px 68px; height: 100vh; overflow: hidden;
+            padding: 14px 18px 68px; min-height: 100vh; overflow: hidden;
         }
 
         /* LOGIN SCREEN */
@@ -147,7 +147,7 @@
 
         /* TABS NAV */
         .tabs {
-            display: flex; gap: 3px; background: #0f172a; padding: 3px;
+            display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; background: #0f172a; padding: 3px;
             border-radius: 9px; border: 1px solid var(--border); flex-shrink: 0;
         }
         .tab-btn {
@@ -158,96 +158,31 @@
         }
         .tab-btn.active { background: var(--accent); color: #0b0f1a; }
         .tab-btn:hover:not(.active) { background: #1e293b; color: var(--text); }
+        .tab-btn.drag-target { outline: 2px solid var(--accent); outline-offset: -2px; color: var(--text); }
 
         /* TAB CONTAINER */
         .tab-content { flex: 1; min-height: 0; position: relative; }
         .tab-pane { position: absolute; inset: 0; display: none; overflow-y: auto; }
         .tab-pane.active { display: block; }
 
-        /* TODAY TAB */
-        #tab-today.active { display: grid; grid-template-columns: 55fr 45fr; gap: 12px; overflow: hidden; }
-        .today-col { overflow-y: auto; min-width: 0; }
-        .dial-progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .dial-section-label { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 1px; white-space: nowrap; }
-        .dial-bar-outer { flex: 1; height: 5px; background: #1e293b; border-radius: 3px; overflow: hidden; }
-        .dial-bar-inner { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; width: 0%; }
-        .dial-count { font-size: 12px; color: var(--accent); font-weight: 700; white-space: nowrap; }
-        .dial-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
-        .dial-row {
-            display: flex; align-items: center; gap: 7px; background: #0f172a;
-            padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border);
-            transition: border-color 0.2s, opacity 0.2s;
+        /* TASK DASHBOARD */
+        .task-pane.active { display: block; }
+        .task-board {
+            display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(280px, 0.9fr);
+            gap: 14px; height: 100%;
         }
-        .dial-num { font-size: 11px; color: var(--accent); font-weight: bold; width: 16px; flex-shrink: 0; }
-        .dial-row input[type="text"] { background: transparent; border: none; color: white; font-size: 12px; flex-grow: 1; outline: none; min-width: 0; }
-        .dial-row select { background: #1e293b; color: var(--accent); border: none; font-size: 11px; border-radius: 4px; padding: 2px 4px; outline: none; flex-shrink: 0; }
-        .dial-row.outcome-convo { border-color: var(--success); }
-        .dial-row.outcome-convo select { color: var(--success); }
-        .dial-row.outcome-sent  { border-color: #3b82f6; }
-        .dial-row.outcome-sent select  { color: #3b82f6; }
-        .dial-row.outcome-ni   { opacity: 0.45; }
-        .today-day-label { font-size: 13px; font-weight: 700; color: var(--accent); padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
-        .today-task { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 7px 0; border-bottom: 1px solid #1a2234; }
-        .today-task:last-child { border-bottom: none; }
-        .today-task input { cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
-        .today-task span { flex: 1; }
-        .today-task.checked span { text-decoration: line-through; opacity: 0.4; }
-
-        /* PIPELINE TAB */
-        #tab-pipeline.active { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; overflow: hidden; }
-        .column {
-            background: var(--card); padding: 11px; border-radius: 10px;
-            border: 1px solid var(--border); display: flex; flex-direction: column;
-            overflow: hidden; transition: border-color 0.15s, background 0.15s;
+        .task-col {
+            display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
         }
-        .column.drag-over { border-color: var(--accent); background: #1a2540; }
-        .column h2 {
-            font-size: 10px; text-transform: uppercase; color: var(--accent);
-            margin: 0 0 8px 0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+        .task-col-scroll { overflow-y: auto; }
+        .task-col-label {
+            font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--accent);
+            letter-spacing: 1px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); flex-shrink: 0;
         }
-        .col-sub { font-size: 9px; color: var(--muted); }
-        .col-count { background: #1e293b; color: var(--accent); border-radius: 10px; padding: 1px 6px; font-size: 10px; font-weight: bold; }
-        .cards-container { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
-        .kanban-card {
-            background: #0f172a; border: 1px solid var(--border); border-radius: 6px;
-            padding: 7px 9px; font-size: 12px; color: #cbd5e1;
-            cursor: grab; user-select: none; display: flex; align-items: flex-start; gap: 5px; flex-shrink: 0;
-            transition: border-color 0.15s, opacity 0.15s, box-shadow 0.15s;
+        .task-summary {
+            font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 14px;
         }
-        .kanban-card:hover { border-color: #334155; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
-        .kanban-card.dragging { opacity: 0.3; border-color: var(--accent); cursor: grabbing; }
-        .kanban-card.drop-above { border-top: 2px solid var(--accent); }
-        .kanban-card.drop-below { border-bottom: 2px solid var(--accent); }
-        .card-text { flex: 1; outline: none; min-width: 0; word-break: break-word; cursor: text; }
-        .card-delete { opacity: 0; background: none; border: none; color: var(--muted); cursor: pointer; padding: 0 2px; font-size: 14px; line-height: 1; flex-shrink: 0; transition: opacity 0.15s, color 0.15s; }
-        .kanban-card:hover .card-delete { opacity: 1; }
-        .card-delete:hover { color: var(--danger); }
-        .add-card-btn {
-            background: transparent; border: 1px dashed #2d3748; color: var(--muted);
-            padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 11px;
-            text-align: left; width: 100%; margin-top: 5px; flex-shrink: 0;
-            transition: border-color 0.15s, color 0.15s; font-family: inherit;
-        }
-        .add-card-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-        /* WEEK TAB */
-        #tab-week { padding-right: 2px; }
-        .day-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 7px; }
-        .day-card.today { border-color: var(--accent); }
-        .day-card.today .day-header { background: #0c1e35; }
-        .day-header { padding: 9px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 12px; background: #111827; user-select: none; }
-        .day-header:hover { background: #1e293b; }
-        .day-header-left { display: flex; align-items: center; gap: 8px; }
-        .today-badge { font-size: 9px; background: var(--accent); color: #0b0f1a; border-radius: 4px; padding: 1px 5px; font-weight: 800; }
-        .day-content { display: none; padding: 12px 16px; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid var(--border); }
-        .task-list { display: flex; flex-direction: column; gap: 7px; }
-        .task { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-        .task input { cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
-
-        /* TO-DO TAB */
-        #tab-todo.active { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; overflow: hidden; }
-        .todo-col { display: flex; flex-direction: column; overflow-y: auto; min-width: 0; }
-        .todo-col-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 1px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
         .todo-add-row { display: flex; gap: 8px; margin-bottom: 10px; flex-shrink: 0; }
         .todo-input { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 8px; font-size: 12px; outline: none; font-family: inherit; min-width: 0; }
         .todo-input:focus { border-color: var(--accent); }
@@ -259,14 +194,71 @@
         .todo-item input { cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
         .todo-item span { flex: 1; }
         .todo-item.done span { text-decoration: line-through; opacity: 0.4; }
+        .todo-edit,
         .todo-del { opacity: 0; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; transition: opacity 0.15s, color 0.15s; }
+        .todo-edit {
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+            padding: 2px 4px;
+        }
+        .todo-item:hover .todo-edit,
         .todo-item:hover .todo-del { opacity: 1; }
+        .todo-edit:hover { color: var(--accent); }
         .todo-del:hover { color: var(--danger); }
-        .done-header { display: none; align-items: center; gap: 8px; margin-top: 12px; margin-bottom: 6px; cursor: pointer; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; user-select: none; flex-shrink: 0; }
-        .done-header:hover { color: var(--text); }
-        .done-badge { background: #1e293b; color: var(--muted); border-radius: 10px; padding: 1px 7px; font-size: 10px; }
-        .done-list { display: none; flex-direction: column; gap: 4px; }
-        .done-list.open { display: flex; }
+        .task-empty {
+            padding: 14px 12px; border: 1px dashed var(--border); border-radius: 10px;
+            color: var(--muted); font-size: 12px; text-align: center; margin-top: 4px;
+        }
+        .calendar-panel {
+            display: flex; flex-direction: column; gap: 10px; height: 100%;
+        }
+        .calendar-card {
+            background: #0f172a; border: 1px solid var(--border); border-radius: 10px;
+            padding: 10px 12px;
+        }
+        .calendar-card strong {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); margin-bottom: 6px;
+        }
+        .calendar-card span { display: block; color: var(--muted); font-size: 12px; line-height: 1.5; }
+        .calendar-date {
+            font-size: 34px; font-weight: 800; line-height: 1; color: var(--text); margin-bottom: 4px;
+        }
+        .calendar-weekday {
+            font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent);
+        }
+        .calendar-month {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+        }
+        .calendar-head {
+            font-size: 10px; color: var(--muted); text-align: center; text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .calendar-day {
+            min-height: 34px; display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; border: 1px solid transparent; font-size: 12px; color: var(--text);
+            background: rgba(255,255,255,0.02);
+        }
+        .calendar-day.muted { color: var(--muted); opacity: 0.45; }
+        .calendar-day.today { border-color: var(--accent); background: rgba(56,189,248,0.12); color: var(--accent); font-weight: 800; }
+        .calendar-week-strip {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+        }
+        .calendar-week-pill {
+            padding: 8px 6px; border-radius: 8px; text-align: center; border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+        }
+        .calendar-week-pill b {
+            display: block; font-size: 10px; color: var(--muted); margin-bottom: 4px; letter-spacing: 0.8px;
+        }
+        .calendar-week-pill span { color: var(--text); font-size: 12px; }
+        .calendar-week-pill.today { border-color: var(--accent); }
+        .done-grid {
+            display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; height: 100%;
+        }
+        .done-group {
+            display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+        }
+        .done-group .todo-list { overflow-y: auto; flex: 1; }
 
         /* FOOTER */
         .footer-tools { position: fixed; bottom: 16px; left: 253px; right: 18px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
@@ -294,15 +286,11 @@
         body.light .mission-strip     { background: linear-gradient(90deg, #e2e8f0, #f1f5f9); }
         body.light .tabs              { background: #e2e8f0; }
         body.light .tab-btn:hover:not(.active) { background: #cbd5e1; color: var(--text); }
-        body.light .dial-row          { background: #f8fafc; }
-        body.light .dial-row select   { background: #e2e8f0; }
-        body.light .dial-row input[type="text"] { color: #0f172a; }
-        body.light .kanban-card       { background: #f8fafc; color: #0f172a; }
-        body.light .day-header        { background: #e2e8f0; }
-        body.light .day-card.today .day-header { background: #dbeafe; }
         body.light .todo-input        { background: #f8fafc; }
         body.light .todo-item         { background: #f8fafc; }
-        body.light .column.drag-over  { background: #dbeafe; }
+        body.light .calendar-card     { background: #f8fafc; }
+        body.light .calendar-day      { background: #f8fafc; }
+        body.light .calendar-week-pill { background: #f8fafc; }
         body.light button.fbtn, body.light .file-label { background: #e2e8f0; color: #0f172a; border-color: #cbd5e1; }
         body.light button.fbtn:hover, body.light .file-label:hover { background: #cbd5e1; }
         body.light .btn-danger        { background: #fee2e2; border-color: #fca5a5; color: var(--danger); }
@@ -310,6 +298,199 @@
         body.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
         body.light .login-card        { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
         body.light .login-field       { background: #f8fafc; }
+        @media (max-width: 1100px) {
+            .schedule-sidebar { width: 210px; }
+            .scoreboard { grid-template-columns: repeat(3, 1fr); }
+            .mission-strip { flex-direction: column; align-items: flex-start; gap: 6px; }
+            .task-board, .done-grid { grid-template-columns: 1fr; }
+            .footer-tools { left: 228px; }
+        }
+        @media (max-width: 820px) {
+            html, body { height: auto; min-height: 100%; }
+            body {
+                flex-direction: column;
+                min-height: 100vh;
+                overflow: auto;
+            }
+            .schedule-sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 220px;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 12px 14px;
+            }
+            .main-content {
+                min-height: 0;
+                height: auto;
+                overflow: visible;
+                padding: 12px 12px 20px;
+            }
+            .scoreboard {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 10px 12px;
+            }
+            .stat-val { font-size: 22px; }
+            .mission-strip {
+                padding: 10px 12px;
+                font-size: 11px;
+            }
+            .tabs {
+                display: flex;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding: 4px;
+                gap: 4px;
+                scrollbar-width: none;
+            }
+            .tabs::-webkit-scrollbar { display: none; }
+            .tab-btn {
+                flex: 0 0 auto;
+                min-width: 140px;
+                padding: 10px 12px;
+                font-size: 10px;
+                line-height: 1.2;
+            }
+            .tab-content {
+                flex: none;
+                min-height: 0;
+                position: static;
+            }
+            .tab-pane {
+                position: static;
+                inset: auto;
+                display: none;
+                overflow: visible;
+            }
+            .task-board {
+                height: auto;
+                gap: 10px;
+            }
+            .task-col {
+                padding: 12px;
+                overflow: visible;
+            }
+            .task-col-scroll,
+            .done-group .todo-list {
+                overflow: visible;
+            }
+            .todo-add-row {
+                flex-direction: column;
+            }
+            .todo-add-btn {
+                width: 100%;
+                padding: 10px 12px;
+            }
+            .todo-item {
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .todo-item span {
+                line-height: 1.45;
+            }
+            .todo-edit,
+            .todo-del {
+                opacity: 1;
+            }
+            .calendar-panel { gap: 8px; }
+            .calendar-card { padding: 10px; }
+            .calendar-date { font-size: 30px; }
+            .calendar-month,
+            .calendar-week-strip {
+                gap: 4px;
+            }
+            .calendar-day,
+            .calendar-week-pill {
+                min-height: 30px;
+                padding: 6px 4px;
+                font-size: 11px;
+            }
+            .done-grid {
+                height: auto;
+                gap: 10px;
+            }
+            .done-group {
+                padding: 12px;
+                overflow: visible;
+            }
+            .footer-tools {
+                position: static;
+                left: auto;
+                right: auto;
+                bottom: auto;
+                margin-top: 10px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                pointer-events: auto;
+            }
+            .btn-group {
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: stretch;
+            }
+            button.fbtn, .file-label {
+                flex: 1 1 140px;
+                text-align: center;
+                padding: 10px 12px;
+            }
+        }
+        @media (max-width: 520px) {
+            .login-card {
+                width: calc(100vw - 24px);
+                padding: 28px 20px;
+            }
+            .schedule-sidebar {
+                max-height: 180px;
+                padding: 10px 12px;
+            }
+            .sched-title { font-size: 8px; }
+            .sched-time,
+            .sched-label,
+            .sched-detail { line-height: 1.4; }
+            .main-content {
+                padding: 10px 10px 18px;
+                gap: 8px;
+            }
+            .scoreboard {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                padding: 10px;
+            }
+            .stat-val { font-size: 20px; }
+            .stat-label { font-size: 9px; }
+            .mission-strip {
+                padding: 9px 10px;
+                font-size: 10px;
+            }
+            .tab-btn {
+                min-width: 124px;
+                padding: 9px 10px;
+                font-size: 9px;
+            }
+            .task-col-label,
+            .calendar-card strong {
+                font-size: 10px;
+            }
+            .task-summary,
+            .todo-input,
+            .todo-item,
+            .calendar-card span,
+            .calendar-week-pill span {
+                font-size: 11px;
+            }
+            .calendar-date { font-size: 26px; }
+            .calendar-head { font-size: 9px; }
+            .calendar-day {
+                min-height: 26px;
+                font-size: 10px;
+            }
+            .calendar-week-pill b { font-size: 9px; }
+            .sync-status {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -318,7 +499,7 @@
 <div id="login-screen">
     <div class="login-card">
         <div class="login-logo">ROCINANTE</div>
-        <div class="login-sub">Revenue Engine</div>
+        <div class="login-sub">Task Dashboard</div>
         <input class="login-field" id="login-email" type="email" placeholder="Email" autocomplete="username">
         <input class="login-field" id="login-pass"  type="password" placeholder="Password" autocomplete="current-password"
             onkeydown="if(event.key==='Enter') doLogin()">
@@ -329,26 +510,26 @@
 
 <!-- SCHEDULE SIDEBAR -->
 <div class="schedule-sidebar">
-    <div class="sched-title">Daily Schedule</div>
+    <div class="sched-title">Work Rhythm</div>
 
     <div class="sched-block">
         <div class="sched-time">9:00 – 9:30 AM</div>
         <div class="sched-label">Command Center</div>
-        <div class="sched-detail">Coffee, Pipedrive review<br>Check overnight replies (email, LinkedIn, FB)<br>Identify today's 2 mockup targets<br>Respond to anything urgent<br>Note follow-up windows today</div>
+        <div class="sched-detail">Coffee, inbox sweep, and task review<br>Check overnight replies (email, LinkedIn, FB)<br>Pick top priorities for each active lane<br>Respond to anything urgent<br>Set follow-up windows for the day</div>
     </div>
     <hr class="sched-divider">
 
     <div class="sched-block">
         <div class="sched-time">9:30 – 11:30 AM</div>
-        <div class="sched-label">Mockup Build #1</div>
-        <div class="sched-detail">Recon (15 min) → Content assembly (30 min) → Build (60 min) → Deploy (15 min)<br>Target: 1 mockup live on Netlify<br>Queue Touch 1 email</div>
+        <div class="sched-label">Deep Work Block #1</div>
+        <div class="sched-detail">Pick the highest-value build or marketing task<br>Work uninterrupted for one full deliverable push<br>Ship something visible before switching lanes</div>
     </div>
     <hr class="sched-divider">
 
     <div class="sched-block">
         <div class="sched-time">11:30 AM – 12:00 PM</div>
-        <div class="sched-label">Follow-Up Sweep</div>
-        <div class="sched-detail">Send Touch 2/3/4/5 emails due today<br>Reply to morning responses<br>Log dispositions in Pipedrive</div>
+        <div class="sched-label">Admin Sweep</div>
+        <div class="sched-detail">Reply to morning responses<br>Update task tabs with progress and blockers<br>Queue anything that needs follow-up later today</div>
     </div>
     <hr class="sched-divider">
 
@@ -361,15 +542,15 @@
 
     <div class="sched-block">
         <div class="sched-time">1:00 – 3:00 PM</div>
-        <div class="sched-label">Mockup Build #2</div>
-        <div class="sched-detail">Second mockup of the day<br>Deploy + Touch 1 queued, not sent yet</div>
+        <div class="sched-label">Deep Work Block #2</div>
+        <div class="sched-detail">Second production block for design, SEO, ads, or content<br>Push another priority task to done</div>
     </div>
     <hr class="sched-divider">
 
     <div class="sched-block">
         <div class="sched-time">3:00 – 5:00 PM</div>
-        <div class="sched-label">CALL BLOCK</div>
-        <div class="sched-detail">Send Mockup #2 Touch 1 at 3:00 PM sharp<br>20 cold dials minimum<br>Call mockup-ready prospects first<br>Then warm follow-ups from Touch sequences<br>Log every call in Pipedrive before next</div>
+        <div class="sched-label">Outreach + Follow-Through</div>
+        <div class="sched-detail">Handle calls, client updates, ad checks, and pending approvals<br>Close loops before the end of the workday<br>Move finished items into Done</div>
     </div>
     <hr class="sched-divider">
 
@@ -404,180 +585,36 @@
 <!-- APP -->
 <div class="main-content">
 <div class="scoreboard">
-    <div class="stat"><div id="s1" class="stat-val">0</div><span class="stat-label">Convos (Week)</span></div>
-    <div class="stat"><div id="s2" class="stat-val">0</div><span class="stat-label">Mockups Sent</span></div>
-    <div class="stat"><div id="s3" class="stat-val">0</div><span class="stat-label">Active Deals</span></div>
-    <div class="stat"><input type="text" id="s4" class="stat-val" value="0"><span class="stat-label">Closes (Month)</span></div>
-    <div class="stat"><input type="text" id="s5" class="stat-val" value="$0"><span class="stat-label">MRR Added</span></div>
+    <div class="stat"><div id="s1" class="stat-val">0</div><span class="stat-label">Open Tasks</span></div>
+    <div class="stat"><div id="s2" class="stat-val">0</div><span class="stat-label">Done Tasks</span></div>
+    <div class="stat"><div id="s3" class="stat-val">0</div><span class="stat-label">Rocinante</span></div>
+    <div class="stat"><div id="s4" class="stat-val">0</div><span class="stat-label">Tree Web</span></div>
+    <div class="stat"><div id="s5" class="stat-val">0</div><span class="stat-label">Channel Work</span></div>
 </div>
 
 <div class="mission-strip">
-    <div><strong>CURRENT PHASE:</strong> 90-Day Outbound Sprint | <strong>DAILY FOCUS:</strong> Dials > Mockups > Follow-ups</div>
-    <div style="color:var(--success);font-weight:bold;letter-spacing:1px">CASH FIRST. ALWAYS.</div>
+    <div><strong>CURRENT FOCUS:</strong> Work the queue, clear blockers, finish what moves the business.</div>
+    <div style="color:var(--success);font-weight:bold;letter-spacing:1px">TASKS FIRST.</div>
 </div>
 
 <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('today')">Today</button>
-    <button class="tab-btn" onclick="switchTab('pipeline')">Pipeline</button>
-    <button class="tab-btn" onclick="switchTab('week')">Week</button>
-    <button class="tab-btn" onclick="switchTab('todo')">To-Do</button>
+    <button class="tab-btn active" onclick="switchTab(event, 'rocinante')">Rocinante Marketing</button>
+    <button class="tab-btn" onclick="switchTab(event, 'tree')">Tree Web Design</button>
+    <button class="tab-btn" onclick="switchTab(event, 'social')">Social Media</button>
+    <button class="tab-btn" onclick="switchTab(event, 'advertising')">Advertising</button>
+    <button class="tab-btn" onclick="switchTab(event, 'seo')">SEO</button>
+    <button class="tab-btn" onclick="switchTab(event, 'personal')">Personal</button>
+    <button class="tab-btn" onclick="switchTab(event, 'done')">Done</button>
 </div>
 
 <div class="tab-content">
-
-    <!-- TODAY -->
-    <div class="tab-pane active" id="tab-today">
-        <div class="today-col" id="today-dial-col">
-            <div class="dial-progress-row">
-                <span class="dial-section-label">Dial Block</span>
-                <div class="dial-bar-outer"><div class="dial-bar-inner" id="dial-bar"></div></div>
-                <span class="dial-count" id="dial-count">0 / 20</span>
-            </div>
-            <div class="dial-grid" id="dial-grid"></div>
-        </div>
-        <div class="today-col">
-            <div class="today-day-label" id="today-day-label">Loading...</div>
-            <div id="today-tasks"></div>
-        </div>
-    </div>
-
-    <!-- PIPELINE -->
-    <div class="tab-pane" id="tab-pipeline">
-        <div class="column" id="col-k1" data-col="k1">
-            <h2>To Build <span class="col-sub">Cap 10</span><span class="col-count" id="cnt-k1">0</span></h2>
-            <div class="cards-container" id="cards-k1"></div>
-            <button class="add-card-btn" onclick="addCard('k1')">+ Add prospect</button>
-        </div>
-        <div class="column" id="col-k2" data-col="k2">
-            <h2>Live T1-T2 <span class="col-sub">Sent</span><span class="col-count" id="cnt-k2">0</span></h2>
-            <div class="cards-container" id="cards-k2"></div>
-            <button class="add-card-btn" onclick="addCard('k2')">+ Add</button>
-        </div>
-        <div class="column" id="col-k3" data-col="k3">
-            <h2>Follow Up T3-T5 <span class="col-sub">Loom</span><span class="col-count" id="cnt-k3">0</span></h2>
-            <div class="cards-container" id="cards-k3"></div>
-            <button class="add-card-btn" onclick="addCard('k3')">+ Add</button>
-        </div>
-        <div class="column" id="col-k4" data-col="k4">
-            <h2>Closing <span class="col-sub">Engaged</span><span class="col-count" id="cnt-k4">0</span></h2>
-            <div class="cards-container" id="cards-k4"></div>
-            <button class="add-card-btn" onclick="addCard('k4')">+ Add</button>
-        </div>
-    </div>
-
-    <!-- WEEK -->
-    <div class="tab-pane" id="tab-week">
-        <div class="day-card" id="day-mon">
-            <div class="day-header" onclick="toggleDay('mon')">
-                <div class="day-header-left"><span>MONDAY</span></div><span>▼</span>
-            </div>
-            <div id="mon" class="day-content">
-                <div class="task-list">
-                    <div class="task"><input type="checkbox" id="wt0"><span>Text 1 active client — referral ask</span></div>
-                    <div class="task"><input type="checkbox" id="wt1"><span>Pull 10 target prospects from Friday's list</span></div>
-                    <div class="task"><input type="checkbox" id="wt2"><span>20 cold dials — tree services</span></div>
-                </div>
-                <div class="task-list">
-                    <div class="task"><input type="checkbox" id="wt3"><span>Build Mockup #1 + send Touch 1</span></div>
-                    <div class="task"><input type="checkbox" id="wt4"><span>Build Mockup #2 + send Touch 1</span></div>
-                    <div class="task"><input type="checkbox" id="wt5"><span>Pipedrive follow-ups due today (T2/T3/T4/T5)</span></div>
-                </div>
-            </div>
-        </div>
-        <div class="day-card" id="day-tue">
-            <div class="day-header" onclick="toggleDay('tue')">
-                <div class="day-header-left"><span>TUESDAY</span></div><span>▼</span>
-            </div>
-            <div id="tue" class="day-content">
-                <div class="task-list">
-                    <div class="task"><input type="checkbox" id="wt6"><span>Build Mockup #3 + send Touch 1</span></div>
-                    <div class="task"><input type="checkbox" id="wt7"><span>Build Mockup #4 + send Touch 1</span></div>
-                    <div class="task"><input type="checkbox" id="wt8"><span>Content shoot — 5-6 shorts + 1 long-form (3hr block)</span></div>
-                </div>
-                <div class="task-list">
-                    <div class="task"><input type="checkbox" id="wt9"><span>1hr client project work</span></div>
-                    <div class="task"><input type="checkbox" id="wt10"><span>Pipedrive cleanup + end-of-day follow-ups</span></div>
-                </div>
-            </div>
-        </div>
-        <div class="day-card" id="day-wed">
-            <div class="day-header" onclick="toggleDay('wed')">
-                <div class="day-header-left"><span>WEDNESDAY</span></div><span>▼</span>
-            </div>
-            <div id="wed" class="day-content">
-                <div class="task-list">
-                    <div class="task"><input type="checkbox" id="wt11"><span>20 cold dials + send Netlify links to Yes dispositions</span></div>
-                    <div class="task"><input type="checkbox" id="wt12"><span>Edit shorts/long-form from Tuesday; schedule for week</span></div>
-                </div>
-                <div class="task-list">
-                    <div class="task"><input type="checkbox" id="wt13"><span>FB Group Post #1 — value-first, no link</span></div>
-                    <div class="task"><input type="checkbox" id="wt14"><span>2hr client project work</span></div>
-                </div>
-            </div>
-        </div>
-        <div class="day-card" id="day-thu">
-            <div class="day-header" onclick="toggleDay('thu')">
-                <div class="day-header-left"><span>THURSDAY</span></div><span>▼</span>
-            </div>
-            <div id="thu" class="day-content">
-                <div class="task-list">
-                    <div class="task"><input type="checkbox" id="wt15"><span>Build Mockup #5, #6, #7 + send Touch 1s</span></div>
-                    <div class="task"><input type="checkbox" id="wt16"><span>Coffee with strategic partner (insurance, bookkeeper, etc.)</span></div>
-                </div>
-                <div class="task-list">
-                    <div class="task"><input type="checkbox" id="wt17"><span>1hr client project work</span></div>
-                    <div class="task"><input type="checkbox" id="wt18"><span>Pipedrive follow-ups due today</span></div>
-                </div>
-            </div>
-        </div>
-        <div class="day-card" id="day-fri">
-            <div class="day-header" onclick="toggleDay('fri')">
-                <div class="day-header-left"><span>FRIDAY</span></div><span>▼</span>
-            </div>
-            <div id="fri" class="day-content">
-                <div class="task-list">
-                    <div class="task"><input type="checkbox" id="wt19"><span>20 cold dials</span></div>
-                    <div class="task"><input type="checkbox" id="wt20"><span>Close calls — warm prospects only</span></div>
-                    <div class="task"><input type="checkbox" id="wt21"><span>Build Mockup #8, #9, #10 + send Touch 1s</span></div>
-                </div>
-                <div class="task-list">
-                    <div class="task"><input type="checkbox" id="wt22"><span>FB Group Post #2 — new group, new angle</span></div>
-                    <div class="task"><input type="checkbox" id="wt23"><span>ID 10 new prospects for Monday (20+ reviews, no site)</span></div>
-                    <div class="task"><input type="checkbox" id="wt24"><span>[Last Friday] 30+ message reactivation sweep</span></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TO-DO -->
-    <div class="tab-pane" id="tab-todo">
-        <div class="todo-col">
-            <div class="todo-col-label">Work</div>
-            <div class="todo-add-row">
-                <input class="todo-input" id="work-input" type="text" placeholder="Add work task..."
-                    onkeydown="if(event.key==='Enter') submitTodo('work')">
-                <button class="todo-add-btn" onclick="submitTodo('work')">Add</button>
-            </div>
-            <div class="todo-list" id="work-active"></div>
-            <div class="done-header" id="work-done-header" onclick="toggleDoneSection('work')">
-                <span id="work-done-arrow">▶</span><span>Done</span><span class="done-badge" id="work-done-count">0</span>
-            </div>
-            <div class="done-list" id="work-done"></div>
-        </div>
-        <div class="todo-col">
-            <div class="todo-col-label">Personal</div>
-            <div class="todo-add-row">
-                <input class="todo-input" id="personal-input" type="text" placeholder="Add personal task..."
-                    onkeydown="if(event.key==='Enter') submitTodo('personal')">
-                <button class="todo-add-btn" onclick="submitTodo('personal')">Add</button>
-            </div>
-            <div class="todo-list" id="personal-active"></div>
-            <div class="done-header" id="personal-done-header" onclick="toggleDoneSection('personal')">
-                <span id="personal-done-arrow">▶</span><span>Done</span><span class="done-badge" id="personal-done-count">0</span>
-            </div>
-            <div class="done-list" id="personal-done"></div>
-        </div>
-    </div>
+    <div class="tab-pane task-pane active" id="tab-rocinante"></div>
+    <div class="tab-pane task-pane" id="tab-tree"></div>
+    <div class="tab-pane task-pane" id="tab-social"></div>
+    <div class="tab-pane task-pane" id="tab-advertising"></div>
+    <div class="tab-pane task-pane" id="tab-seo"></div>
+    <div class="tab-pane task-pane" id="tab-personal"></div>
+    <div class="tab-pane task-pane" id="tab-done"></div>
 
 </div>
 </div><!-- /.main-content -->
@@ -591,7 +628,7 @@
     </div>
     <div class="btn-group">
         <button class="fbtn" onclick="doLogout()">Sign Out</button>
-        <button class="fbtn btn-danger" onclick="clearWeek()">Monday Reset</button>
+        <button class="fbtn btn-danger" onclick="clearCompleted()">Clear Done</button>
     </div>
 </div>
 
@@ -658,255 +695,374 @@ async function initApp() {
     hideLogin();
     await loadData();
     dataLoaded = true;
-    buildTodayPanel();
+    renderAllTaskPanes();
+    updateScoreboard();
 }
 
 // ── TABS ──────────────────────────────────────────────────────
-function switchTab(name) {
+function switchTab(event, name) {
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
     event.currentTarget.classList.add('active');
 }
 
-// ── TODAY PANEL ───────────────────────────────────────────────
-const DAY_MAP   = { 1:'mon', 2:'tue', 3:'wed', 4:'thu', 5:'fri' };
-const DAY_NAMES = { mon:'Monday', tue:'Tuesday', wed:'Wednesday', thu:'Thursday', fri:'Friday' };
-const DAY_TASKS = { mon:['wt0','wt1','wt2','wt3','wt4','wt5'], tue:['wt6','wt7','wt8','wt9','wt10'], wed:['wt11','wt12','wt13','wt14'], thu:['wt15','wt16','wt17','wt18'], fri:['wt19','wt20','wt21','wt22','wt23','wt24'] };
-
-function buildTodayPanel() {
-    const dayId = DAY_MAP[new Date().getDay()];
-    const panel  = document.getElementById('today-tasks');
-    const label  = document.getElementById('today-day-label');
-    if (!dayId) {
-        label.textContent = 'Weekend — Rest. Ride Monday ready.';
-        panel.innerHTML = '<div style="color:var(--muted);font-size:13px;padding-top:8px">No dial block today.</div>';
-        return;
+// ── TASKS ─────────────────────────────────────────────────────
+const TASK_CATEGORIES = {
+    rocinante: {
+        label: 'Rocinante Marketing',
+        summary: 'Brand, site, outreach assets, client-facing messaging, and internal marketing ops.',
+        focus: ['Sharpen offers and messaging', 'Queue assets that ship this week']
+    },
+    tree: {
+        label: 'Tree Web Design',
+        summary: 'Builds, revisions, launch prep, client updates, and production work for tree service projects.',
+        focus: ['Keep deliverables moving', 'Clear revision blockers fast']
+    },
+    social: {
+        label: 'Social Media',
+        summary: 'Content creation, scheduling, posting cadence, and platform-specific follow-through.',
+        focus: ['Publish consistently', 'Turn ideas into scheduled content']
+    },
+    advertising: {
+        label: 'Advertising',
+        summary: 'Campaign setup, ad creative, budget changes, landing page alignment, and reporting follow-up.',
+        focus: ['Improve spend efficiency', 'Keep campaigns current']
+    },
+    seo: {
+        label: 'SEO',
+        summary: 'On-page fixes, content briefs, local SEO tasks, technical cleanup, and ranking support.',
+        focus: ['Ship ranking improvements', 'Close technical gaps']
+    },
+    personal: {
+        label: 'Personal',
+        summary: 'Home, errands, admin, appointments, and non-work tasks that still need a place in the system.',
+        focus: ['Keep life admin visible', 'Separate personal load from client work']
     }
-    label.textContent = DAY_NAMES[dayId];
-    panel.innerHTML = '';
-    DAY_TASKS[dayId].forEach(id => {
-        const src  = document.getElementById(id);
-        const text = src?.closest('.task')?.querySelector('span')?.textContent || '';
-        const row  = document.createElement('div');
-        row.className = 'today-task' + (src?.checked ? ' checked' : '');
-        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!src?.checked;
-        const sp = document.createElement('span'); sp.textContent = text;
-        row.append(cb, sp);
-        cb.addEventListener('change', () => {
-            if (src) src.checked = cb.checked;
-            row.classList.toggle('checked', cb.checked);
-            save();
-        });
-        if (src) src.addEventListener('change', () => { cb.checked = src.checked; row.classList.toggle('checked', src.checked); });
-        panel.appendChild(row);
-    });
-    const card = document.getElementById('day-' + dayId);
-    if (card && !card.classList.contains('today')) {
-        card.classList.add('today');
-        const left = card.querySelector('.day-header-left');
-        if (left) { const b = document.createElement('span'); b.className = 'today-badge'; b.textContent = 'TODAY'; left.appendChild(b); }
-        document.getElementById(dayId).style.display = 'grid';
-    }
+};
+
+const CATEGORY_KEYS = Object.keys(TASK_CATEGORIES);
+let taskLists = {};
+let nextId = 1;
+let draggedTask = null;
+
+function starterTasks() {
+    return {
+        rocinante: [
+            { id: 1, text: 'Tighten Rocinante homepage headline', done: false },
+            { id: 2, text: 'Draft this week\'s client proof post', done: false }
+        ],
+        tree: [
+            { id: 3, text: 'Finish Tree Web Design revision queue', done: false },
+            { id: 4, text: 'Send progress update to active tree client', done: false }
+        ],
+        social: [
+            { id: 5, text: 'Schedule three short-form posts', done: false }
+        ],
+        advertising: [
+            { id: 6, text: 'Review campaign CTR and pause weak ad set', done: false }
+        ],
+        seo: [
+            { id: 7, text: 'Update title tags for top local service pages', done: false }
+        ],
+        personal: [
+            { id: 8, text: 'Schedule personal appointment or errand', done: false }
+        ]
+    };
 }
 
-function toggleDay(id) {
-    const el = document.getElementById(id);
-    el.style.display = (el.style.display === 'grid') ? 'none' : 'grid';
+function getCategoryTasks(type) {
+    if (!taskLists[type]) taskLists[type] = [];
+    return taskLists[type];
 }
-
-// ── DIAL LOG ──────────────────────────────────────────────────
-const dialGrid = document.getElementById('dial-grid');
-for (let i = 1; i <= 20; i++) {
-    dialGrid.innerHTML += `<div class="dial-row" id="dr${i}">
-        <span class="dial-num">${i}</span>
-        <input type="checkbox" onchange="updateDialProgress();save()">
-        <input type="text" placeholder="Name / Note">
-        <select onchange="applyDialStyle(${i},this.value);updateDialProgress();save()">
-            <option value="VM">VM</option><option value="NA">No Ans</option>
-            <option value="CONVO">Convo</option><option value="SENT">Sent</option><option value="NI">Not Int</option>
-        </select></div>`;
-}
-function applyDialStyle(n, v) {
-    const r = document.getElementById('dr'+n); r.className = 'dial-row';
-    if (v==='CONVO') r.classList.add('outcome-convo');
-    else if (v==='SENT') r.classList.add('outcome-sent');
-    else if (v==='NI') r.classList.add('outcome-ni');
-}
-function updateDialProgress() {
-    const n = document.querySelectorAll('.dial-row input[type="checkbox"]:checked').length;
-    document.getElementById('dial-count').textContent = n + ' / 20';
-    document.getElementById('dial-bar').style.width = (n / 20 * 100) + '%';
-    updateScoreboard();
-}
-function updateScoreboard() {
-    const convos = Array.from(document.querySelectorAll('.dial-row select')).filter(s => s.value === 'CONVO').length;
-    document.getElementById('s1').textContent = convos;
-    const sent = (kanbanCards.k2||[]).length + (kanbanCards.k3||[]).length + (kanbanCards.k4||[]).length;
-    document.getElementById('s2').textContent = sent;
-    const active = (kanbanCards.k3||[]).length + (kanbanCards.k4||[]).length;
-    document.getElementById('s3').textContent = active;
-}
-
-// ── KANBAN ────────────────────────────────────────────────────
-const COLS = ['k1','k2','k3','k4'];
-let kanbanCards = { k1:[], k2:[], k3:[], k4:[] };
-let dragSrcCol = null, dragSrcIdx = null;
-
-function renderColumn(colId) {
-    const c = document.getElementById('cards-' + colId);
-    c.innerHTML = '';
-    kanbanCards[colId].forEach((text, idx) => c.appendChild(makeCard(colId, idx, text)));
-    document.getElementById('cnt-' + colId).textContent = kanbanCards[colId].length;
-}
-function makeCard(colId, idx, text) {
-    const card = document.createElement('div');
-    card.className = 'kanban-card'; card.draggable = true;
-    card.dataset.col = colId; card.dataset.idx = idx;
-    const t = document.createElement('div'); t.className = 'card-text';
-    t.contentEditable = true; t.spellcheck = false; t.textContent = text;
-    t.addEventListener('blur', () => { kanbanCards[colId][idx] = t.textContent.trim(); save(); });
-    t.addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); addCard(colId); } });
-    t.addEventListener('mousedown', e => e.stopPropagation());
-    const d = document.createElement('button'); d.className = 'card-delete'; d.textContent = '×';
-    d.onclick = () => { kanbanCards[colId].splice(idx,1); renderColumn(colId); updateScoreboard(); save(); };
-    card.append(t, d);
-    card.addEventListener('dragstart', e => {
-        dragSrcCol = colId; dragSrcIdx = idx; card.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain','');
-    });
-    card.addEventListener('dragend', () => {
-        document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
-        document.querySelectorAll('.drop-above,.drop-below').forEach(el => el.classList.remove('drop-above','drop-below'));
-        document.querySelectorAll('.column.drag-over').forEach(el => el.classList.remove('drag-over'));
-    });
-    card.addEventListener('dragover', e => {
-        e.preventDefault(); e.stopPropagation();
-        document.querySelectorAll('.drop-above,.drop-below').forEach(el => el.classList.remove('drop-above','drop-below'));
-        const r = card.getBoundingClientRect();
-        card.classList.add(e.clientY < r.top + r.height/2 ? 'drop-above' : 'drop-below');
-    });
-    card.addEventListener('drop', e => {
-        e.preventDefault(); e.stopPropagation();
-        if (dragSrcCol===null) return;
-        const above = card.classList.contains('drop-above');
-        moveCard(dragSrcCol, dragSrcIdx, colId, above ? parseInt(card.dataset.idx) : parseInt(card.dataset.idx)+1);
-    });
-    return card;
-}
-function moveCard(sc, si, dc, at) {
-    const text = kanbanCards[sc][si]; kanbanCards[sc].splice(si,1);
-    let adj = at; if (sc===dc && si<at) adj--;
-    kanbanCards[dc].splice(Math.max(0,adj),0,text);
-    COLS.forEach(c => renderColumn(c)); updateScoreboard(); save();
-}
-function addCard(colId, text) {
-    kanbanCards[colId].push(text||''); renderColumn(colId);
-    const els = document.querySelectorAll('#cards-'+colId+' .card-text');
-    if (els.length) {
-        const last = els[els.length-1]; last.focus();
-        const range = document.createRange(); range.selectNodeContents(last); range.collapse(false);
-        window.getSelection().removeAllRanges(); window.getSelection().addRange(range);
-    }
-    save();
-}
-COLS.forEach(colId => {
-    const col = document.getElementById('col-'+colId);
-    col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('drag-over'); });
-    col.addEventListener('dragleave', e => { if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over'); });
-    col.addEventListener('drop', e => {
-        e.preventDefault(); col.classList.remove('drag-over');
-        if (dragSrcCol===null) return;
-        if (!e.target.closest('.kanban-card')) moveCard(dragSrcCol, dragSrcIdx, colId, kanbanCards[colId].length);
-    });
-});
-
-// ── TO-DO ─────────────────────────────────────────────────────
-let workTodos = [], personalTodos = [], nextId = 1;
-let workDoneOpen = false, personalDoneOpen = false;
-
-function getTodoList(type) { return type === 'work' ? workTodos : personalTodos; }
-function setTodoList(type, arr) { if (type === 'work') workTodos = arr; else personalTodos = arr; }
 
 function submitTodo(type) {
     const inp = document.getElementById(type + '-input');
-    const text = inp.value.trim(); if (!text) return;
-    getTodoList(type).push({ id: nextId++, text, done: false });
-    inp.value = ''; renderTodos(); save();
+    const text = inp.value.trim();
+    if (!text) return;
+    getCategoryTasks(type).push({ id: nextId++, text, done: false });
+    inp.value = '';
+    renderAllTaskPanes();
+    updateScoreboard();
+    save();
 }
+
 function toggleTodo(type, id) {
-    const t = getTodoList(type).find(x => x.id === id);
-    if (t) { t.done = !t.done; renderTodos(); save(); }
+    const task = getCategoryTasks(type).find(x => x.id === id);
+    if (!task) return;
+    task.done = !task.done;
+    renderAllTaskPanes();
+    updateScoreboard();
+    save();
 }
+
 function deleteTodo(type, id) {
-    setTodoList(type, getTodoList(type).filter(x => x.id !== id));
-    renderTodos(); save();
+    taskLists[type] = getCategoryTasks(type).filter(x => x.id !== id);
+    renderAllTaskPanes();
+    updateScoreboard();
+    save();
 }
-function makeTodoEl(type, t) {
-    const div = document.createElement('div'); div.className = 'todo-item' + (t.done ? ' done' : '');
-    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = t.done;
-    cb.onchange = () => toggleTodo(type, t.id);
-    const sp = document.createElement('span'); sp.textContent = t.text;
-    const dl = document.createElement('button'); dl.className = 'todo-del'; dl.textContent = '×';
-    dl.onclick = () => deleteTodo(type, t.id);
-    div.append(cb, sp, dl); return div;
+
+function editTodo(type, id) {
+    const task = getCategoryTasks(type).find(x => x.id === id);
+    if (!task) return;
+    const nextText = window.prompt('Edit task', task.text);
+    if (nextText === null) return;
+    const trimmed = nextText.trim();
+    if (!trimmed) return;
+    task.text = trimmed;
+    renderAllTaskPanes();
+    updateScoreboard();
+    save();
 }
-function renderTodoCol(type) {
-    const list = getTodoList(type);
-    const active = list.filter(t => !t.done), done = list.filter(t => t.done);
-    const al = document.getElementById(type + '-active'); al.innerHTML = '';
-    active.forEach(t => al.appendChild(makeTodoEl(type, t)));
-    const dl = document.getElementById(type + '-done'); dl.innerHTML = '';
-    done.forEach(t => dl.appendChild(makeTodoEl(type, t)));
-    const hdr = document.getElementById(type + '-done-header');
-    hdr.style.display = done.length ? 'flex' : 'none';
-    document.getElementById(type + '-done-count').textContent = done.length;
+
+function moveTaskToTab(sourceType, id, target) {
+    const sourceTasks = getCategoryTasks(sourceType);
+    const idx = sourceTasks.findIndex(task => task.id === id);
+    if (idx === -1) return;
+    const [task] = sourceTasks.splice(idx, 1);
+    if (target === 'done') {
+        task.done = true;
+        sourceTasks.push(task);
+    } else {
+        task.done = false;
+        getCategoryTasks(target).push(task);
+    }
+    renderAllTaskPanes();
+    updateScoreboard();
+    save();
 }
-function renderTodos() { renderTodoCol('work'); renderTodoCol('personal'); }
-function toggleDoneSection(type) {
-    if (type === 'work') { workDoneOpen = !workDoneOpen; document.getElementById('work-done').classList.toggle('open', workDoneOpen); document.getElementById('work-done-arrow').textContent = workDoneOpen ? '▼' : '▶'; }
-    else { personalDoneOpen = !personalDoneOpen; document.getElementById('personal-done').classList.toggle('open', personalDoneOpen); document.getElementById('personal-done-arrow').textContent = personalDoneOpen ? '▼' : '▶'; }
+
+function makeTodoEl(type, task, isDoneView = false) {
+    const div = document.createElement('div');
+    div.className = 'todo-item' + (task.done ? ' done' : '');
+    div.draggable = true;
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = task.done;
+    cb.onchange = () => toggleTodo(type, task.id);
+    const sp = document.createElement('span');
+    sp.textContent = task.text;
+    sp.addEventListener('dblclick', () => editTodo(type, task.id));
+    const edit = document.createElement('button');
+    edit.className = 'todo-edit';
+    edit.textContent = 'Edit';
+    edit.onclick = () => editTodo(type, task.id);
+    const dl = document.createElement('button');
+    dl.className = 'todo-del';
+    dl.textContent = '×';
+    dl.onclick = () => deleteTodo(type, task.id);
+    div.append(cb, sp, edit, dl);
+    if (isDoneView) div.title = TASK_CATEGORIES[type].label;
+    div.addEventListener('dragstart', () => {
+        draggedTask = { sourceType: type, id: task.id };
+        div.classList.add('dragging');
+    });
+    div.addEventListener('dragend', () => {
+        draggedTask = null;
+        div.classList.remove('dragging');
+        document.querySelectorAll('.tab-btn.drag-target').forEach(btn => btn.classList.remove('drag-target'));
+    });
+    return div;
+}
+
+function renderCalendarWidget() {
+    const now = new Date();
+    const monthLabel = now.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    const weekdayLabel = now.toLocaleDateString(undefined, { weekday: 'long' });
+    const first = new Date(now.getFullYear(), now.getMonth(), 1);
+    const start = new Date(first);
+    start.setDate(first.getDate() - first.getDay());
+    const days = [];
+    for (let i = 0; i < 35; i++) {
+        const day = new Date(start);
+        day.setDate(start.getDate() + i);
+        const muted = day.getMonth() !== now.getMonth();
+        const today = day.toDateString() === now.toDateString();
+        days.push(`<div class="calendar-day${muted ? ' muted' : ''}${today ? ' today' : ''}">${day.getDate()}</div>`);
+    }
+    const weekDays = [];
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    for (let i = 0; i < 7; i++) {
+        const day = new Date(weekStart);
+        day.setDate(weekStart.getDate() + i);
+        const today = day.toDateString() === now.toDateString();
+        weekDays.push(`
+            <div class="calendar-week-pill${today ? ' today' : ''}">
+                <b>${day.toLocaleDateString(undefined, { weekday: 'short' })}</b>
+                <span>${day.getDate()}</span>
+            </div>
+        `);
+    }
+    return `
+        <div class="calendar-panel">
+            <div class="calendar-card">
+                <strong><span>Today</span><span>${monthLabel}</span></strong>
+                <div class="calendar-date">${now.getDate()}</div>
+                <div class="calendar-weekday">${weekdayLabel}</div>
+            </div>
+            <div class="calendar-card">
+                <strong><span>This Week</span><span>Day ${now.getDay() + 1}</span></strong>
+                <div class="calendar-week-strip">${weekDays.join('')}</div>
+            </div>
+            <div class="calendar-card">
+                <strong><span>Month View</span><span>${monthLabel}</span></strong>
+                <div class="calendar-month">
+                    <div class="calendar-head">Sun</div>
+                    <div class="calendar-head">Mon</div>
+                    <div class="calendar-head">Tue</div>
+                    <div class="calendar-head">Wed</div>
+                    <div class="calendar-head">Thu</div>
+                    <div class="calendar-head">Fri</div>
+                    <div class="calendar-head">Sat</div>
+                    ${days.join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderCategoryPane(type) {
+    const pane = document.getElementById('tab-' + type);
+    const meta = TASK_CATEGORIES[type];
+    const tasks = getCategoryTasks(type);
+    const activeTasks = tasks.filter(task => !task.done);
+
+    pane.innerHTML = `
+        <div class="task-board">
+            <div class="task-col">
+                <div class="task-col-label">${meta.label}</div>
+                <div class="task-summary">${meta.summary}</div>
+                <div class="todo-add-row">
+                    <input class="todo-input" id="${type}-input" type="text" placeholder="Add task..."
+                        onkeydown="if(event.key==='Enter') submitTodo('${type}')">
+                    <button class="todo-add-btn" onclick="submitTodo('${type}')">Add Task</button>
+                </div>
+                <div class="todo-list task-col-scroll" id="${type}-active"></div>
+            </div>
+            <div class="task-col">
+                <div class="task-col-label">Calendar</div>
+                ${renderCalendarWidget()}
+            </div>
+        </div>
+    `;
+
+    const listEl = document.getElementById(type + '-active');
+    if (!activeTasks.length) {
+        const empty = document.createElement('div');
+        empty.className = 'task-empty';
+        empty.textContent = 'No open tasks in this lane.';
+        listEl.appendChild(empty);
+        return;
+    }
+    activeTasks.forEach(task => listEl.appendChild(makeTodoEl(type, task)));
+}
+
+function renderDonePane() {
+    const pane = document.getElementById('tab-done');
+    pane.innerHTML = `<div class="done-grid">${CATEGORY_KEYS.map(type => `
+        <div class="done-group">
+            <div class="task-col-label">${TASK_CATEGORIES[type].label}</div>
+            <div class="todo-list" id="${type}-done"></div>
+        </div>
+    `).join('')}</div>`;
+
+    CATEGORY_KEYS.forEach(type => {
+        const doneEl = document.getElementById(type + '-done');
+        const doneTasks = getCategoryTasks(type).filter(task => task.done);
+        if (!doneTasks.length) {
+            const empty = document.createElement('div');
+            empty.className = 'task-empty';
+            empty.textContent = 'Nothing finished here yet.';
+            doneEl.appendChild(empty);
+            return;
+        }
+        doneTasks.forEach(task => doneEl.appendChild(makeTodoEl(type, task, true)));
+    });
+}
+
+function renderAllTaskPanes() {
+    CATEGORY_KEYS.forEach(renderCategoryPane);
+    renderDonePane();
+}
+
+function updateScoreboard() {
+    const openCount = CATEGORY_KEYS.reduce((sum, key) => sum + getCategoryTasks(key).filter(task => !task.done).length, 0);
+    const doneCount = CATEGORY_KEYS.reduce((sum, key) => sum + getCategoryTasks(key).filter(task => task.done).length, 0);
+    document.getElementById('s1').textContent = openCount;
+    document.getElementById('s2').textContent = doneCount;
+    document.getElementById('s3').textContent = getCategoryTasks('rocinante').filter(task => !task.done).length;
+    document.getElementById('s4').textContent = getCategoryTasks('tree').filter(task => !task.done).length;
+    document.getElementById('s5').textContent =
+        getCategoryTasks('social').filter(task => !task.done).length +
+        getCategoryTasks('advertising').filter(task => !task.done).length +
+        getCategoryTasks('seo').filter(task => !task.done).length;
+}
+
+function setupTabDropzones() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        const label = btn.textContent.trim();
+        const target = label === 'Rocinante Marketing' ? 'rocinante'
+            : label === 'Tree Web Design' ? 'tree'
+            : label === 'Social Media' ? 'social'
+            : label === 'Advertising' ? 'advertising'
+            : label === 'SEO' ? 'seo'
+            : label === 'Personal' ? 'personal'
+            : 'done';
+        btn.dataset.targetTab = target;
+        btn.addEventListener('dragover', e => {
+            if (!draggedTask) return;
+            e.preventDefault();
+            btn.classList.add('drag-target');
+        });
+        btn.addEventListener('dragleave', () => btn.classList.remove('drag-target'));
+        btn.addEventListener('drop', e => {
+            if (!draggedTask) return;
+            e.preventDefault();
+            btn.classList.remove('drag-target');
+            moveTaskToTab(draggedTask.sourceType, draggedTask.id, target);
+        });
+    });
 }
 
 // ── PERSISTENCE ───────────────────────────────────────────────
-const WT_IDS = ['wt0','wt1','wt2','wt3','wt4','wt5','wt6','wt7','wt8','wt9','wt10','wt11','wt12','wt13','wt14','wt15','wt16','wt17','wt18','wt19','wt20','wt21','wt22','wt23','wt24'];
-
 function gatherData() {
     return {
-        v: '3.3',
+        v: '4.0',
         savedAt:      Date.now(),
-        stats:        [1,2,3,4,5].map(i => { const el=document.getElementById('s'+i); return el.tagName==='INPUT'?el.value:el.textContent; }),
-        kanban:       kanbanCards,
-        weekChecks:   WT_IDS.map(id => { const el=document.getElementById(id); return el?el.checked:false; }),
-        dialChecks:   Array.from(document.querySelectorAll('.dial-row input[type="checkbox"]')).map(c=>c.checked),
-        dialTexts:    Array.from(document.querySelectorAll('.dial-row input[type="text"]')).map(t=>t.value),
-        dialOutcomes: Array.from(document.querySelectorAll('.dial-row select')).map(s=>s.value),
-        workTodos, personalTodos, nextId
+        taskLists,
+        nextId
     };
 }
 
 function applyData(data) {
-    if (data.stats) data.stats.forEach((v,i) => { const el=document.getElementById('s'+(i+1)); if(el.tagName==='INPUT') el.value=v; });
-    if (data.kanban && !Array.isArray(data.kanban)) {
-        kanbanCards = data.kanban;
-    } else if (Array.isArray(data.kanban)) {
-        COLS.forEach((c,i) => { kanbanCards[c]=(data.kanban[i]||'').split('\n').map(l=>l.trim()).filter(Boolean); });
+    if (data.taskLists) {
+        taskLists = data.taskLists;
+    } else if (data.workTodos || data.personalTodos || data.todos) {
+        const legacyWork = data.workTodos || data.todos || [];
+        const legacyPersonal = data.personalTodos || [];
+        taskLists = {
+            rocinante: legacyWork,
+            tree: legacyPersonal,
+            social: [],
+            advertising: [],
+            seo: [],
+            personal: []
+        };
+    } else {
+        taskLists = starterTasks();
     }
-    COLS.forEach(c => renderColumn(c));
-    if (data.weekChecks) {
-        WT_IDS.forEach((id,i) => { const el=document.getElementById(id); if(el) el.checked=!!data.weekChecks[i]; });
-    }
-    const dCBs = document.querySelectorAll('.dial-row input[type="checkbox"]');
-    (data.dialChecks||[]).forEach((v,i) => { if(dCBs[i]) dCBs[i].checked=v; });
-    const dTxts = document.querySelectorAll('.dial-row input[type="text"]');
-    (data.dialTexts||data.texts||[]).forEach((v,i) => { if(dTxts[i]) dTxts[i].value=v; });
-    const dSels = document.querySelectorAll('.dial-row select');
-    (data.dialOutcomes||data.outcomes||[]).forEach((v,i) => { if(dSels[i]){dSels[i].value=v;applyDialStyle(i+1,v);} });
-    if (data.workTodos) workTodos = data.workTodos;
-    if (data.personalTodos) personalTodos = data.personalTodos;
-    if (!data.workTodos && data.todos) workTodos = data.todos; // migrate legacy single-list
+    CATEGORY_KEYS.forEach(type => {
+        if (!Array.isArray(taskLists[type])) taskLists[type] = [];
+    });
     if (data.nextId) nextId = data.nextId;
-    renderTodos(); updateDialProgress(); updateScoreboard();
+    else {
+        const ids = CATEGORY_KEYS.flatMap(type => getCategoryTasks(type).map(task => task.id || 0));
+        nextId = Math.max(0, ...ids) + 1;
+    }
+    renderAllTaskPanes();
+    updateScoreboard();
 }
 
 // Save: instant to localStorage + debounced to Supabase
@@ -920,7 +1076,7 @@ function setSyncDot(state) {
 function save() {
     if (!dataLoaded) return;
     const data = gatherData();
-    localStorage.setItem('rocinante_v3_3', JSON.stringify(data));
+    localStorage.setItem('rocinante_v4_0', JSON.stringify(data));
     setSyncDot('syncing');
     clearTimeout(cloudSaveTimer);
     cloudSaveTimer = setTimeout(() => saveToCloud(data), 800);
@@ -972,7 +1128,7 @@ async function loadData() {
     }
 
     let localData = null;
-    for (const key of ['rocinante_v3_3','rocinante_v3_2','rocinante_v3_1']) {
+    for (const key of ['rocinante_v4_0','rocinante_v3_3','rocinante_v3_2','rocinante_v3_1']) {
         const raw = localStorage.getItem(key);
         if (raw) { try { localData = JSON.parse(raw); break; } catch(e){} }
     }
@@ -986,10 +1142,13 @@ async function loadData() {
 
     if (best) {
         try { applyData(best); } catch(e) { console.error('applyData error:', e); }
-        localStorage.setItem('rocinante_v3_3', JSON.stringify(best));
+        localStorage.setItem('rocinante_v4_0', JSON.stringify(gatherData()));
         if (cloudData) { setSyncDot('synced'); setTimeout(() => setSyncDot(''), 3000); }
     } else {
-        COLS.forEach(c => renderColumn(c));
+        taskLists = starterTasks();
+        nextId = 9;
+        renderAllTaskPanes();
+        updateScoreboard();
     }
 }
 
@@ -1002,16 +1161,17 @@ function exportData() {
 function importData(e) {
     const file = e.target.files[0]; if(!file) return;
     const r = new FileReader();
-    r.onload = ev => { localStorage.setItem('rocinante_v3_3', ev.target.result); location.reload(); };
+    r.onload = ev => { localStorage.setItem('rocinante_v4_0', ev.target.result); location.reload(); };
     r.readAsText(file);
 }
-function clearWeek() {
-    if (!confirm("Monday Reset? Clears dials and weekly checks — Kanban, Scoreboard, and To-Do stay.")) return;
-    document.querySelectorAll('.dial-row input[type="checkbox"]').forEach(c=>c.checked=false);
-    document.querySelectorAll('.dial-row input[type="text"]').forEach(t=>t.value='');
-    document.querySelectorAll('.dial-row select').forEach((s,i)=>{ s.selectedIndex=0; applyDialStyle(i+1,'VM'); });
-    WT_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) el.checked=false; });
-    updateDialProgress(); buildTodayPanel(); save();
+function clearCompleted() {
+    if (!confirm('Clear all completed tasks from every tab?')) return;
+    CATEGORY_KEYS.forEach(type => {
+        taskLists[type] = getCategoryTasks(type).filter(task => !task.done);
+    });
+    renderAllTaskPanes();
+    updateScoreboard();
+    save();
 }
 function toggleTheme() {
     const light = document.body.classList.toggle('light');
@@ -1024,6 +1184,7 @@ function toggleTheme() {
 if (localStorage.getItem('theme') === 'light') {
     document.body.classList.add('light');
 }
+setupTabDropzones();
 window.onload = async () => {
     if (localStorage.getItem('theme') === 'light') {
         document.getElementById('theme-btn').textContent = '☾ Dark';
