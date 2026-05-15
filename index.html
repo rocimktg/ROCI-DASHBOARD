@@ -22,55 +22,20 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --bg: #0b0f1a; --card: #161e2e; --text: #f1f5f9;
-            --accent: #38bdf8; --border: #1f2937; --success: #22c55e;
-            --warning: #f59e0b; --danger: #ef4444; --muted: #64748b;
+            --bg: #10100e; --card: #171612; --text: #c8bfa8;
+            --accent: #c28a3a; --border: #2a2720; --success: #7a9e6e;
+            --warning: #c99142; --danger: #b66a5f; --muted: #8f8776;
         }
         *, *::before, *::after { box-sizing: border-box; }
         html, body { height: 100%; margin: 0; }
         body {
             font-family: -apple-system, system-ui, sans-serif;
             background: var(--bg); color: var(--text);
-            display: flex; flex-direction: row;
-            min-height: 100vh; overflow: hidden; margin: 0; padding: 0;
-        }
-        .schedule-sidebar {
-            width: 235px; flex-shrink: 0;
-            height: 100vh; overflow-y: auto;
-            background: #0b1120; border-right: 1px solid var(--border);
-            padding: 14px 10px 14px 12px;
-            display: flex; flex-direction: column; gap: 0;
-        }
-        .schedule-sidebar::-webkit-scrollbar { width: 3px; }
-        .schedule-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-        .sched-title {
-            font-size: 9px; font-weight: 800; text-transform: uppercase;
-            letter-spacing: 1.5px; color: var(--accent); margin-bottom: 10px;
-            padding-bottom: 6px; border-bottom: 1px solid var(--border);
-        }
-        .sched-block { margin-bottom: 0; }
-        .sched-time {
-            font-size: 9px; font-weight: 700; color: var(--warning);
-            text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.3;
-            margin-bottom: 2px;
-        }
-        .sched-label {
-            font-size: 10px; font-weight: 700; color: var(--text);
-            line-height: 1.3; margin-bottom: 3px;
-        }
-        .sched-detail {
-            font-size: 9.5px; color: var(--muted); line-height: 1.5;
-        }
-        .sched-divider { border: none; border-top: 1px solid var(--border); margin: 5px 0 5px; }
-        body.light .schedule-sidebar { background: #f1f5f9; border-color: #cbd5e1; }
-        body.light .sched-detail { color: #64748b; }
-        .main-content {
-            flex: 1; min-width: 0;
-            display: flex; flex-direction: column; gap: 10px;
-            padding: 14px 18px 68px; min-height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden; margin: 0; padding: 0;
         }
 
-        /* LOGIN SCREEN */
+        /* LOGIN */
         #login-screen {
             position: fixed; inset: 0; z-index: 1000;
             background: var(--bg); display: flex; align-items: center; justify-content: center;
@@ -89,411 +54,418 @@
         }
         .login-field:focus { border-color: var(--accent); }
         .login-btn {
-            background: var(--accent); color: #0b0f1a; border: none;
+            background: var(--accent); color: var(--bg); border: none;
             padding: 10px; border-radius: 8px; cursor: pointer;
             font-size: 13px; font-weight: 800; font-family: inherit; margin-top: 4px;
-            transition: opacity 0.15s;
         }
         .login-btn:hover { opacity: 0.85; }
         .login-btn:disabled { opacity: 0.5; cursor: default; }
         .login-error { color: var(--danger); font-size: 12px; text-align: center; min-height: 16px; }
+
+        /* SYNC DOT */
         .sync-status {
             display: inline-flex; align-items: center; gap: 5px;
             padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
-            border: 1px solid transparent; transition: opacity 0.4s, background 0.3s, border-color 0.3s, color 0.3s;
+            border: 1px solid transparent;
             background: transparent; color: var(--muted); border-color: transparent;
             letter-spacing: 0.03em; user-select: none; opacity: 0;
         }
         .sync-status::before {
             content: ''; width: 6px; height: 6px; border-radius: 50%;
-            background: var(--muted); flex-shrink: 0; transition: background 0.3s;
+            background: var(--muted); flex-shrink: 0;
         }
-        .sync-status.syncing {
-            opacity: 1; background: rgba(234,179,8,0.12); color: #ca8a04; border-color: #ca8a04;
-        }
+        .sync-status.syncing { opacity: 1; background: rgba(234,179,8,0.12); color: #ca8a04; border-color: #ca8a04; }
         .sync-status.syncing::before { background: #ca8a04; }
-        .sync-status.synced {
-            opacity: 1; background: rgba(34,197,94,0.12); color: #16a34a; border-color: #16a34a;
-        }
-        .sync-status.synced::before { background: #16a34a; }
-        .sync-status.error {
-            opacity: 1; background: rgba(239,68,68,0.12); color: #dc2626; border-color: #dc2626;
-        }
-        .sync-status.error::before { background: #dc2626; }
-        body.light .sync-status.syncing { background: rgba(234,179,8,0.15); }
-        body.light .sync-status.synced  { background: rgba(34,197,94,0.15); }
-        body.light .sync-status.error   { background: rgba(239,68,68,0.15); }
+        .sync-status.synced  { opacity: 1; background: rgba(34,197,94,0.12); color: #16a34a; border-color: #16a34a; }
+        .sync-status.synced::before  { background: #16a34a; }
+        .sync-status.error   { opacity: 1; background: rgba(239,68,68,0.12); color: #dc2626; border-color: #dc2626; }
+        .sync-status.error::before   { background: #dc2626; }
 
-        /* SCOREBOARD */
-        .scoreboard {
-            display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
-            background: #0f172a; padding: 12px 18px; border-radius: 10px;
-            border: 2px solid var(--accent); flex-shrink: 0;
+        /* MAIN */
+        .main-content {
+            flex: 1; min-height: 0;
+            display: flex; flex-direction: column; gap: 10px;
+            padding: 14px 18px 68px; overflow: hidden;
         }
-        .stat { text-align: center; }
-        .stat-val {
-            display: block; width: 100%; background: transparent; border: none;
-            font-size: 24px; font-weight: 800; color: var(--accent); text-align: center; outline: none;
-        }
-        .stat-label { font-size: 10px; text-transform: uppercase; color: var(--muted); letter-spacing: 1px; }
 
-        /* MISSION STRIP */
-        .mission-strip {
-            background: linear-gradient(90deg, #1e293b, #0f172a);
-            padding: 8px 16px; border-radius: 8px; border-left: 4px solid var(--warning);
-            display: flex; align-items: center; justify-content: space-between; font-size: 12px;
+        /* FILTER BAR */
+        .kanban-filter {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+            padding: 8px 14px; background: var(--card); border-radius: 10px;
+            border: 1px solid var(--border); flex-shrink: 0;
+        }
+        .filter-label {
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1.2px; color: var(--muted); margin-right: 2px;
+        }
+        .filter-btn {
+            padding: 5px 16px; border-radius: 20px; cursor: pointer;
+            font-size: 11px; font-weight: 700; font-family: inherit;
+            letter-spacing: 0.5px; background: transparent;
+            color: var(--muted); border: 1.5px solid var(--border);
+        }
+        .filter-btn:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+        .filter-btn.active { background: var(--muted); color: var(--bg); border-color: var(--muted); }
+
+        /* ADD TASK BAR */
+        .kanban-add-bar {
+            background: var(--card); border-radius: 10px;
+            border: 1px solid var(--border); flex-shrink: 0; overflow: hidden;
+        }
+        .kanban-add-bar.focused { border-color: var(--accent); }
+        .kanban-add-wrap { display: flex; flex-direction: column; }
+        .kanban-input {
+            width: 100%; background: transparent; border: none;
+            color: var(--text); padding: 11px 16px;
+            font-size: 15px; outline: none; font-family: inherit;
+        }
+        .tag-strip {
+            border-top: 1px solid var(--border);
+            padding: 8px 12px 10px;
+            display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+        }
+        .tag-strip.hidden { display: none; }
+        .tag-pill {
+            padding: 4px 13px; border-radius: 20px; cursor: pointer;
+            font-size: 10px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase;
+            background: transparent; border: 1px solid var(--border); color: var(--muted);
+            user-select: none; font-family: inherit;
+        }
+        .tag-pill.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+        .tag-strip-hint {
+            font-size: 10px; color: var(--muted); opacity: 0.5; margin-left: auto;
+            font-style: italic; letter-spacing: 0.3px;
+        }
+
+        /* CONTENT AREA (kanban + calendar side by side) */
+        .content-area {
+            display: flex; flex-direction: row; gap: 14px;
+            flex: 1; min-height: 0; overflow: hidden;
+        }
+        .kanban-area {
+            display: flex; flex-direction: column; gap: 10px;
+            flex: 1; min-height: 0; overflow: hidden;
+        }
+
+        /* CALENDAR SIDEBAR */
+        .calendar-sidebar {
+            width: 256px; flex-shrink: 0;
+            display: flex; flex-direction: column; gap: 10px;
+            overflow-y: auto; padding-right: 2px;
+        }
+        .calendar-sidebar::-webkit-scrollbar { width: 3px; }
+        .calendar-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .cal-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px 14px; flex-shrink: 0;
+        }
+        .cal-card-title {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.8px; color: var(--accent); margin-bottom: 8px;
+        }
+        .cal-date {
+            font-size: 42px; font-weight: 800; line-height: 1;
+            color: var(--text); margin-bottom: 4px;
+        }
+        .cal-weekday {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent);
+        }
+        .cal-month {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 2px;
+        }
+        .cal-head {
+            font-size: 9px; color: var(--muted); text-align: center;
+            text-transform: uppercase; letter-spacing: 0.6px; padding-bottom: 2px;
+        }
+        .cal-day {
+            aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+            border-radius: 6px; border: 1px solid transparent; font-size: 11px; color: var(--text);
+        }
+        .cal-day.muted { color: var(--muted); opacity: 0.4; }
+        .cal-day.today { border-color: var(--accent); background: rgba(56,189,248,0.12); color: var(--accent); font-weight: 800; }
+        .cal-week-strip {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+        }
+        .cal-week-pill {
+            padding: 6px 3px; border-radius: 7px; text-align: center;
+            border: 1px solid var(--border);
+        }
+        .cal-week-pill b {
+            display: block; font-size: 9px; color: var(--muted); margin-bottom: 3px; letter-spacing: 0.5px; font-weight: 700;
+        }
+        .cal-week-pill span { color: var(--text); font-size: 11px; font-weight: 600; }
+        .cal-week-pill.today { border-color: var(--accent); }
+
+        /* KANBAN BOARD */
+        .kanban-board {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+            flex: 1; min-height: 0; overflow: hidden;
+        }
+        .kanban-col {
+            display: flex; flex-direction: column; overflow: hidden;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px 14px 10px;
+        }
+        .kanban-col.drag-over { border-color: var(--accent); background: rgba(56,189,248,0.04); }
+        .kanban-col-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
             flex-shrink: 0;
         }
+        .kanban-col-title {
+            font-size: 13px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1.5px; color: var(--accent);
+        }
+        .col-count {
+            font-size: 11px; font-weight: 700; background: var(--border);
+            color: var(--muted); padding: 2px 9px; border-radius: 10px;
+        }
+        .kanban-col-body {
+            overflow-y: auto; display: flex; flex-direction: column; gap: 4px;
+            flex: 1; padding-right: 2px;
+        }
+        .kanban-col-body::-webkit-scrollbar { width: 3px; }
+        .kanban-col-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-        /* TABS NAV */
-        .tabs {
-            display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; background: #0f172a; padding: 3px;
-            border-radius: 9px; border: 1px solid var(--border); flex-shrink: 0;
+        /* KANBAN CARD */
+        .kanban-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+            padding: 7px 10px 6px; cursor: grab;
+            user-select: none; display: flex; flex-direction: column; gap: 3px;
         }
-        .tab-btn {
-            flex: 1; padding: 6px 0; border: none; border-radius: 7px;
-            background: transparent; color: var(--muted); cursor: pointer;
-            font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
-            transition: all 0.15s; font-family: inherit;
+        .kanban-card:hover { border-color: var(--muted); }
+        .kanban-card.dragging { opacity: 0.4; transform: scale(0.97); cursor: grabbing; }
+        .kanban-card-header { display: flex; gap: 8px; align-items: flex-start; }
+        .kanban-card-text {
+            flex: 1; font-size: 13px; line-height: 1.35; color: var(--text); font-weight: 500;
         }
-        .tab-btn.active { background: var(--accent); color: #0b0f1a; }
-        .tab-btn:hover:not(.active) { background: #1e293b; color: var(--text); }
-        .tab-btn.drag-target { outline: 2px solid var(--accent); outline-offset: -2px; color: var(--text); }
+        .kanban-card.done .kanban-card-text { text-decoration: line-through; opacity: 0.45; }
+        .kanban-card-tags {
+            flex-shrink: 0; display: flex; flex-direction: column; gap: 3px; align-items: flex-end;
+        }
+        .kanban-tag {
+            font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px;
+            padding: 2px 6px; border-radius: 6px; white-space: nowrap;
+            color: var(--muted); border: 1px solid var(--border); background: transparent;
+        }
+        .kanban-card-actions {
+            display: flex; gap: 2px; opacity: 0; justify-content: flex-end;
+        }
+        .kanban-card:hover .kanban-card-actions { opacity: 1; }
+        .card-edit-btn, .card-del-btn, .card-done-btn {
+            background: none; border: none; cursor: pointer; padding: 2px 5px;
+            font-family: inherit;
+        }
+        .card-edit-btn {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; color: var(--muted);
+        }
+        .card-del-btn  { font-size: 18px; line-height: 1; color: var(--muted); }
+        .card-done-btn { font-size: 15px; line-height: 1; color: var(--muted); }
+        .card-edit-btn:hover { color: var(--accent); }
+        .card-del-btn:hover  { color: var(--danger); }
+        .card-done-btn:hover { color: var(--success); }
+        .kanban-empty {
+            padding: 24px 14px; border: 1px dashed var(--border); border-radius: 10px;
+            color: var(--muted); font-size: 14px; text-align: center;
+        }
 
-        /* TAB CONTAINER */
-        .tab-content { flex: 1; min-height: 0; position: relative; }
-        .tab-pane { position: absolute; inset: 0; display: none; overflow-y: auto; }
-        .tab-pane.active { display: block; }
+        /* EDIT MODAL */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 500;
+            background: rgba(0,0,0,0.65); display: flex;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.hidden { display: none; }
+        .modal-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 28px 28px 24px;
+            width: 460px; max-width: calc(100vw - 32px);
+            display: flex; flex-direction: column; gap: 20px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+        }
+        .modal-title {
+            font-size: 13px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1.4px; color: var(--accent);
+        }
+        .modal-textarea {
+            background: var(--bg); border: 1px solid var(--border);
+            color: var(--text); padding: 12px 14px; border-radius: 8px;
+            font-size: 15px; font-family: inherit; resize: vertical;
+            min-height: 90px; outline: none; line-height: 1.55;
+            width: 100%;
+        }
+        .modal-textarea:focus { border-color: var(--accent); }
+        .modal-section-label {
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--muted); margin-bottom: 10px;
+        }
+        .modal-checkboxes { display: flex; flex-direction: column; gap: 12px; }
+        .modal-check-row {
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer; font-size: 15px; color: var(--text); user-select: none;
+        }
+        .modal-check-row input[type="checkbox"] {
+            width: 17px; height: 17px; accent-color: var(--accent);
+            cursor: pointer; flex-shrink: 0;
+        }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-save-btn {
+            background: var(--accent); color: var(--bg); border: none;
+            padding: 10px 24px; border-radius: 8px; cursor: pointer;
+            font-size: 13px; font-weight: 800; font-family: inherit;
+        }
+        .modal-save-btn:hover { opacity: 0.85; }
+        .modal-cancel-btn {
+            background: transparent; color: var(--muted); border: 1px solid var(--border);
+            padding: 10px 18px; border-radius: 8px; cursor: pointer;
+            font-size: 13px; font-weight: 600; font-family: inherit;
+        }
+        .modal-cancel-btn:hover { border-color: var(--muted); color: var(--text); }
+        body.light .modal-textarea { background: #f8fafc; }
 
-        /* TASK DASHBOARD */
-        .task-pane.active { display: block; }
-        .task-board {
-            display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(280px, 0.9fr);
-            gap: 14px; height: 100%;
+        /* DAILY CHECKLIST SIDEBAR */
+        .checklist-sidebar {
+            width: 256px; flex-shrink: 0;
+            display: flex; flex-direction: column; gap: 10px;
+            overflow-y: auto;
         }
-        .task-col {
-            display: flex; flex-direction: column; min-width: 0; overflow: hidden;
-            background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+        .checklist-sidebar::-webkit-scrollbar { width: 3px; }
+        .checklist-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .cl-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px 14px;
+            display: flex; flex-direction: column; gap: 12px; flex-shrink: 0;
         }
-        .task-col-scroll { overflow-y: auto; }
-        .task-col-label {
-            font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--accent);
-            letter-spacing: 1px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); flex-shrink: 0;
-        }
-        .task-summary {
-            font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 14px;
-        }
-        .todo-add-row { display: flex; gap: 8px; margin-bottom: 10px; flex-shrink: 0; }
-        .todo-input { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 8px; font-size: 12px; outline: none; font-family: inherit; min-width: 0; }
-        .todo-input:focus { border-color: var(--accent); }
-        .todo-add-btn { background: var(--accent); color: #0b0f1a; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 800; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
-        .todo-add-btn:hover { background: #7dd3fc; }
-        .todo-list { display: flex; flex-direction: column; gap: 4px; }
-        .todo-item { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); padding: 8px 10px; border-radius: 8px; font-size: 12px; transition: border-color 0.15s; }
-        .todo-item:hover { border-color: #334155; }
-        .todo-item input { cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
-        .todo-item span { flex: 1; }
-        .todo-item.done span { text-decoration: line-through; opacity: 0.4; }
-        .todo-edit,
-        .todo-del { opacity: 0; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; transition: opacity 0.15s, color 0.15s; }
-        .todo-edit {
-            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
-            padding: 2px 4px;
-        }
-        .todo-item:hover .todo-edit,
-        .todo-item:hover .todo-del { opacity: 1; }
-        .todo-edit:hover { color: var(--accent); }
-        .todo-del:hover { color: var(--danger); }
-        .task-empty {
-            padding: 14px 12px; border: 1px dashed var(--border); border-radius: 10px;
-            color: var(--muted); font-size: 12px; text-align: center; margin-top: 4px;
-        }
-        .calendar-panel {
-            display: flex; flex-direction: column; gap: 10px; height: 100%;
-        }
-        .calendar-card {
-            background: #0f172a; border: 1px solid var(--border); border-radius: 10px;
-            padding: 10px 12px;
-        }
-        .calendar-card strong {
+        .cl-header {
             display: flex; justify-content: space-between; align-items: center;
-            font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); margin-bottom: 6px;
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.8px; color: var(--accent);
         }
-        .calendar-card span { display: block; color: var(--muted); font-size: 12px; line-height: 1.5; }
-        .calendar-date {
-            font-size: 34px; font-weight: 800; line-height: 1; color: var(--text); margin-bottom: 4px;
+        .cl-progress { color: var(--muted); font-size: 11px; font-weight: 700; }
+        .cl-items { display: flex; flex-direction: column; gap: 9px; }
+        .cl-item {
+            display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+            font-size: 14px; color: var(--text); line-height: 1.4; user-select: none;
         }
-        .calendar-weekday {
-            font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent);
+        .cl-item input[type="checkbox"] {
+            width: 15px; height: 15px; margin-top: 2px;
+            accent-color: var(--muted); cursor: pointer; flex-shrink: 0;
+            opacity: 0.5;
         }
-        .calendar-month {
-            display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+        .cl-item.done span { text-decoration: line-through; opacity: 0.38; }
+        .cl-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+        .cl-add-row { display: flex; gap: 6px; }
+        .cl-input {
+            flex: 1; background: var(--bg); border: 1px solid var(--border);
+            color: var(--text); padding: 6px 10px; border-radius: 7px;
+            font-size: 12px; outline: none; font-family: inherit;
         }
-        .calendar-head {
-            font-size: 10px; color: var(--muted); text-align: center; text-transform: uppercase; letter-spacing: 0.8px;
+        .cl-input:focus { border-color: var(--accent); }
+        .cl-add-btn {
+            background: var(--border); color: var(--text); border: none;
+            width: 30px; border-radius: 7px; cursor: pointer;
+            font-size: 18px; line-height: 1; font-family: inherit;
         }
-        .calendar-day {
-            min-height: 34px; display: flex; align-items: center; justify-content: center;
-            border-radius: 8px; border: 1px solid transparent; font-size: 12px; color: var(--text);
-            background: rgba(255,255,255,0.02);
-        }
-        .calendar-day.muted { color: var(--muted); opacity: 0.45; }
-        .calendar-day.today { border-color: var(--accent); background: rgba(56,189,248,0.12); color: var(--accent); font-weight: 800; }
-        .calendar-week-strip {
-            display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
-        }
-        .calendar-week-pill {
-            padding: 8px 6px; border-radius: 8px; text-align: center; border: 1px solid var(--border);
-            background: rgba(255,255,255,0.02);
-        }
-        .calendar-week-pill b {
-            display: block; font-size: 10px; color: var(--muted); margin-bottom: 4px; letter-spacing: 0.8px;
-        }
-        .calendar-week-pill span { color: var(--text); font-size: 12px; }
-        .calendar-week-pill.today { border-color: var(--accent); }
-        .done-grid {
-            display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; height: 100%;
-        }
-        .done-group {
-            display: flex; flex-direction: column; min-width: 0; overflow: hidden;
-            background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
-        }
-        .done-group .todo-list { overflow-y: auto; flex: 1; }
+        .cl-add-btn:hover { background: var(--accent); color: var(--bg); }
+        body.light .cl-card  { background: #f8fafc; }
+        body.light .cl-input { background: #fff; }
 
         /* FOOTER */
-        .footer-tools { position: fixed; bottom: 16px; left: 253px; right: 18px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+        .footer-tools {
+            position: fixed; bottom: 16px; left: 18px; right: 18px;
+            display: flex; justify-content: space-between; align-items: center; pointer-events: none;
+        }
         .btn-group { display: flex; gap: 8px; pointer-events: auto; align-items: center; }
         button.fbtn, .file-label {
-            background: #1e293b; color: white; border: 1px solid var(--border);
+            background: var(--card); color: var(--text); border: 1px solid var(--border);
             padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600;
-            transition: 0.2s; font-family: inherit;
+            font-family: inherit;
         }
-        button.fbtn:hover, .file-label:hover { background: #334155; border-color: var(--accent); }
+        button.fbtn:hover, .file-label:hover { background: var(--border); border-color: var(--accent); }
         .btn-danger { background: #450a0a; border-color: #991b1b; }
         .btn-danger:hover { background: var(--danger); }
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
         /* LIGHT MODE */
         body.light {
-            --bg: #f1f5f9; --card: #ffffff; --text: #0f172a;
+            --bg: #f1f5f9; --card: #ffffff; --text: #1a1a1a;
             --accent: #0284c7; --border: #e2e8f0; --success: #16a34a;
             --warning: #b45309; --danger: #dc2626; --muted: #64748b;
         }
-        body.light .scoreboard        { background: #e2e8f0; }
-        body.light .mission-strip     { background: linear-gradient(90deg, #e2e8f0, #f1f5f9); }
-        body.light .tabs              { background: #e2e8f0; }
-        body.light .tab-btn:hover:not(.active) { background: #cbd5e1; color: var(--text); }
-        body.light .todo-input        { background: #f8fafc; }
-        body.light .todo-item         { background: #f8fafc; }
-        body.light .calendar-card     { background: #f8fafc; }
-        body.light .calendar-day      { background: #f8fafc; }
-        body.light .calendar-week-pill { background: #f8fafc; }
-        body.light button.fbtn, body.light .file-label { background: #e2e8f0; color: #0f172a; border-color: #cbd5e1; }
+        body.light .kanban-filter,
+        body.light .kanban-add-bar { background: #e2e8f0; }
+        body.light .kanban-input   { background: #f8fafc; color: #1a1a1a; }
+        body.light .kanban-card    { background: #f8fafc; }
+        body.light .cal-card       { background: #f8fafc; }
+        body.light .kanban-col     { background: #f1f5f9; }
+        body.light .kanban-col-title { color: var(--accent); }
+        body.light .kanban-card-text { color: #1a1a1a; }
+        body.light .tag-pill       { color: #64748b; }
+        body.light .tag-pill.active,
+        body.light .filter-btn.active { color: #ffffff; }
+        body.light .kanban-add-btn,
+        body.light .modal-save-btn { color: #ffffff; }
+        body.light .cl-add-btn:hover { color: #ffffff; }
+
+        body.light button.fbtn, body.light .file-label { background: #e2e8f0; color: #1a1a1a; border-color: #cbd5e1; }
         body.light button.fbtn:hover, body.light .file-label:hover { background: #cbd5e1; }
-        body.light .btn-danger        { background: #fee2e2; border-color: #fca5a5; color: var(--danger); }
-        body.light .btn-danger:hover  { background: var(--danger); color: white; }
+        body.light .btn-danger { background: #fee2e2; border-color: #fca5a5; color: var(--danger); }
+        body.light .btn-danger:hover { background: var(--danger); color: white; }
         body.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
-        body.light .login-card        { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
-        body.light .login-field       { background: #f8fafc; }
-        @media (max-width: 1100px) {
-            .schedule-sidebar { width: 210px; }
-            .scoreboard { grid-template-columns: repeat(3, 1fr); }
-            .mission-strip { flex-direction: column; align-items: flex-start; gap: 6px; }
-            .task-board, .done-grid { grid-template-columns: 1fr; }
-            .footer-tools { left: 228px; }
+        body.light .login-card  { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+        body.light .login-field { background: #f8fafc; }
+
+        @media (max-width: 1200px) {
+            .calendar-sidebar, .checklist-sidebar { width: 210px; }
+        }
+        @media (max-width: 900px) {
+            .content-area { flex-direction: column; overflow: visible; height: auto; }
+            .kanban-area  { overflow: visible; min-height: 0; }
+            .calendar-sidebar, .checklist-sidebar { width: 100%; height: auto; overflow: visible; flex-direction: row; flex-wrap: wrap; }
+            .cal-card, .cl-card { flex: 1 1 200px; }
         }
         @media (max-width: 820px) {
-            html, body { height: auto; min-height: 100%; }
-            body {
-                flex-direction: column;
-                min-height: 100vh;
-                overflow: auto;
-            }
-            .schedule-sidebar {
-                width: 100%;
-                height: auto;
-                max-height: 220px;
-                border-right: none;
-                border-bottom: 1px solid var(--border);
-                padding: 12px 14px;
-            }
-            .main-content {
-                min-height: 0;
-                height: auto;
-                overflow: visible;
-                padding: 12px 12px 20px;
-            }
-            .scoreboard {
-                grid-template-columns: repeat(2, 1fr);
-                padding: 10px 12px;
-            }
-            .stat-val { font-size: 22px; }
-            .mission-strip {
-                padding: 10px 12px;
-                font-size: 11px;
-            }
-            .tabs {
-                display: flex;
-                overflow-x: auto;
-                overflow-y: hidden;
-                padding: 4px;
-                gap: 4px;
-                scrollbar-width: none;
-            }
-            .tabs::-webkit-scrollbar { display: none; }
-            .tab-btn {
-                flex: 0 0 auto;
-                min-width: 140px;
-                padding: 10px 12px;
-                font-size: 10px;
-                line-height: 1.2;
-            }
-            .tab-content {
-                flex: none;
-                min-height: 0;
-                position: static;
-            }
-            .tab-pane {
-                position: static;
-                inset: auto;
-                display: none;
-                overflow: visible;
-            }
-            .task-board {
-                height: auto;
-                gap: 10px;
-            }
-            .task-col {
-                padding: 12px;
-                overflow: visible;
-            }
-            .task-col-scroll,
-            .done-group .todo-list {
-                overflow: visible;
-            }
-            .todo-add-row {
-                flex-direction: column;
-            }
-            .todo-add-btn {
-                width: 100%;
-                padding: 10px 12px;
-            }
-            .todo-item {
-                align-items: flex-start;
-                gap: 8px;
-            }
-            .todo-item span {
-                line-height: 1.45;
-            }
-            .todo-edit,
-            .todo-del {
-                opacity: 1;
-            }
-            .calendar-panel { gap: 8px; }
-            .calendar-card { padding: 10px; }
-            .calendar-date { font-size: 30px; }
-            .calendar-month,
-            .calendar-week-strip {
-                gap: 4px;
-            }
-            .calendar-day,
-            .calendar-week-pill {
-                min-height: 30px;
-                padding: 6px 4px;
-                font-size: 11px;
-            }
-            .done-grid {
-                height: auto;
-                gap: 10px;
-            }
-            .done-group {
-                padding: 12px;
-                overflow: visible;
-            }
-            .footer-tools {
-                position: static;
-                left: auto;
-                right: auto;
-                bottom: auto;
-                margin-top: 10px;
-                flex-direction: column;
-                align-items: stretch;
-                gap: 8px;
-                pointer-events: auto;
-            }
-            .btn-group {
-                width: 100%;
-                flex-wrap: wrap;
-                justify-content: stretch;
-            }
-            button.fbtn, .file-label {
-                flex: 1 1 140px;
-                text-align: center;
-                padding: 10px 12px;
-            }
+            html, body { height: auto; min-height: 100%; overflow: auto; }
+            .main-content { padding: 12px 12px 20px; overflow: visible; height: auto; }
+            .kanban-board { grid-template-columns: 1fr; height: auto; overflow: visible; }
+            .kanban-col { overflow: visible; }
+            .kanban-col-body { overflow: visible; }
+            .footer-tools { position: static; margin-top: 10px; flex-direction: column; align-items: stretch; gap: 8px; pointer-events: auto; }
+            .btn-group { flex-wrap: wrap; }
         }
         @media (max-width: 520px) {
-            .login-card {
-                width: calc(100vw - 24px);
-                padding: 28px 20px;
-            }
-            .schedule-sidebar {
-                max-height: 180px;
-                padding: 10px 12px;
-            }
-            .sched-title { font-size: 8px; }
-            .sched-time,
-            .sched-label,
-            .sched-detail { line-height: 1.4; }
-            .main-content {
-                padding: 10px 10px 18px;
-                gap: 8px;
-            }
-            .scoreboard {
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
-                padding: 10px;
-            }
-            .stat-val { font-size: 20px; }
-            .stat-label { font-size: 9px; }
-            .mission-strip {
-                padding: 9px 10px;
-                font-size: 10px;
-            }
-            .tab-btn {
-                min-width: 124px;
-                padding: 9px 10px;
-                font-size: 9px;
-            }
-            .task-col-label,
-            .calendar-card strong {
-                font-size: 10px;
-            }
-            .task-summary,
-            .todo-input,
-            .todo-item,
-            .calendar-card span,
-            .calendar-week-pill span {
-                font-size: 11px;
-            }
-            .calendar-date { font-size: 26px; }
-            .calendar-head { font-size: 9px; }
-            .calendar-day {
-                min-height: 26px;
-                font-size: 10px;
-            }
-            .calendar-week-pill b { font-size: 9px; }
-            .sync-status {
-                width: 100%;
-                justify-content: center;
-            }
+            .login-card { width: calc(100vw - 24px); padding: 28px 20px; }
+            .kanban-add-bar { flex-direction: column; align-items: stretch; }
+            .kanban-input { min-width: 0; font-size: 14px; }
+            .kanban-add-btn { width: 100%; }
+            .kanban-card-text { font-size: 15px; }
+            .card-edit-btn, .card-del-btn, .card-done-btn { opacity: 1; }
         }
     </style>
 </head>
 <body>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay hidden" id="edit-modal" onclick="if(event.target===this) closeModal()">
+    <div class="modal-card">
+        <div class="modal-title">Edit Task</div>
+        <textarea class="modal-textarea" id="modal-text" rows="3"
+            onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey)) saveModal()"></textarea>
+        <div>
+            <div class="modal-section-label">Categories</div>
+            <div class="modal-checkboxes" id="modal-checkboxes"></div>
+        </div>
+        <div class="modal-actions">
+            <button class="modal-cancel-btn" onclick="closeModal()">Cancel</button>
+            <button class="modal-save-btn" onclick="saveModal()">Save</button>
+        </div>
+    </div>
+</div>
 
 <!-- LOGIN SCREEN -->
 <div id="login-screen">
@@ -501,122 +473,78 @@
         <div class="login-logo">ROCINANTE</div>
         <div class="login-sub">Task Dashboard</div>
         <input class="login-field" id="login-email" type="email" placeholder="Email" autocomplete="username">
-        <input class="login-field" id="login-pass"  type="password" placeholder="Password" autocomplete="current-password"
+        <input class="login-field" id="login-pass" type="password" placeholder="Password" autocomplete="current-password"
             onkeydown="if(event.key==='Enter') doLogin()">
         <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
         <div class="login-error" id="login-error"></div>
     </div>
 </div>
 
-<!-- SCHEDULE SIDEBAR -->
-<div class="schedule-sidebar">
-    <div class="sched-title">Work Rhythm</div>
-
-    <div class="sched-block">
-        <div class="sched-time">9:00 – 9:30 AM</div>
-        <div class="sched-label">Command Center</div>
-        <div class="sched-detail">Coffee, inbox sweep, and task review<br>Check overnight replies (email, LinkedIn, FB)<br>Pick top priorities for each active lane<br>Respond to anything urgent<br>Set follow-up windows for the day</div>
-    </div>
-    <hr class="sched-divider">
-
-    <div class="sched-block">
-        <div class="sched-time">9:30 – 11:30 AM</div>
-        <div class="sched-label">Deep Work Block #1</div>
-        <div class="sched-detail">Pick the highest-value build or marketing task<br>Work uninterrupted for one full deliverable push<br>Ship something visible before switching lanes</div>
-    </div>
-    <hr class="sched-divider">
-
-    <div class="sched-block">
-        <div class="sched-time">11:30 AM – 12:00 PM</div>
-        <div class="sched-label">Admin Sweep</div>
-        <div class="sched-detail">Reply to morning responses<br>Update task tabs with progress and blockers<br>Queue anything that needs follow-up later today</div>
-    </div>
-    <hr class="sched-divider">
-
-    <div class="sched-block">
-        <div class="sched-time">12:00 – 1:00 PM</div>
-        <div class="sched-label">Lunch + Reset</div>
-        <div class="sched-detail"></div>
-    </div>
-    <hr class="sched-divider">
-
-    <div class="sched-block">
-        <div class="sched-time">1:00 – 3:00 PM</div>
-        <div class="sched-label">Deep Work Block #2</div>
-        <div class="sched-detail">Second production block for design, SEO, ads, or content<br>Push another priority task to done</div>
-    </div>
-    <hr class="sched-divider">
-
-    <div class="sched-block">
-        <div class="sched-time">3:00 – 5:00 PM</div>
-        <div class="sched-label">Outreach + Follow-Through</div>
-        <div class="sched-detail">Handle calls, client updates, ad checks, and pending approvals<br>Close loops before the end of the workday<br>Move finished items into Done</div>
-    </div>
-    <hr class="sched-divider">
-
-    <div class="sched-block">
-        <div class="sched-time">5:00 – 6:00 PM</div>
-        <div class="sched-label">Dinner / Family Break</div>
-        <div class="sched-detail"></div>
-    </div>
-    <hr class="sched-divider">
-
-    <div class="sched-block">
-        <div class="sched-time">6:00 – 8:00 PM</div>
-        <div class="sched-label">Active Client Work</div>
-        <div class="sched-detail">Current build progress<br>Edits, revisions, client comms<br>Deploy updates, send progress reports</div>
-    </div>
-    <hr class="sched-divider">
-
-    <div class="sched-block">
-        <div class="sched-time">8:00 – 9:00 PM</div>
-        <div class="sched-label">Content + Close-Out</div>
-        <div class="sched-detail"><strong style="color:var(--accent)">Mon:</strong> FB post #1 + referral text<br><strong style="color:var(--accent)">Tue:</strong> Shoot — 3–4 shorts + long-form<br><strong style="color:var(--accent)">Wed:</strong> Edit + schedule Meta, TikTok, YT<br><strong style="color:var(--accent)">Thu:</strong> Partnership outreach + long-form edit<br><strong style="color:var(--accent)">Fri:</strong> FB post #2 + weekly review</div>
-    </div>
-    <hr class="sched-divider">
-
-    <div class="sched-block">
-        <div class="sched-time">9:00 PM</div>
-        <div class="sched-label">Shutdown</div>
-        <div class="sched-detail">Turn off computer</div>
-    </div>
-</div>
-
 <!-- APP -->
 <div class="main-content">
-<div class="scoreboard">
-    <div class="stat"><div id="s1" class="stat-val">0</div><span class="stat-label">Open Tasks</span></div>
-    <div class="stat"><div id="s2" class="stat-val">0</div><span class="stat-label">Done Tasks</span></div>
-    <div class="stat"><div id="s3" class="stat-val">0</div><span class="stat-label">Rocinante</span></div>
-    <div class="stat"><div id="s4" class="stat-val">0</div><span class="stat-label">Tree Web</span></div>
-    <div class="stat"><div id="s5" class="stat-val">0</div><span class="stat-label">Channel Work</span></div>
+
+
+<div class="content-area">
+
+<!-- DAILY CHECKLIST -->
+<div class="checklist-sidebar" id="checklist-sidebar"></div>
+
+<!-- KANBAN AREA -->
+<div class="kanban-area">
+
+<!-- FILTER BAR -->
+<div class="kanban-filter">
+    <span class="filter-label">Filter</span>
+    <button class="filter-btn active" data-tag="all"         onclick="toggleFilter('all')">All</button>
+    <button class="filter-btn"        data-tag="rocinante"   onclick="toggleFilter('rocinante')">Rocinante</button>
+    <button class="filter-btn"        data-tag="tree"        onclick="toggleFilter('tree')">Tree Web Design</button>
+    <button class="filter-btn"        data-tag="treeservice" onclick="toggleFilter('treeservice')">Tree Service News</button>
+    <button class="filter-btn"        data-tag="whitelabel"  onclick="toggleFilter('whitelabel')">White Label</button>
+    <button class="filter-btn"        data-tag="personal"    onclick="toggleFilter('personal')">Personal</button>
 </div>
 
-<div class="mission-strip">
-    <div><strong>CURRENT FOCUS:</strong> Work the queue, clear blockers, finish what moves the business.</div>
-    <div style="color:var(--success);font-weight:bold;letter-spacing:1px">TASKS FIRST.</div>
+<!-- ADD TASK BAR -->
+<div class="kanban-add-bar" id="kanban-add-bar">
+    <div class="kanban-add-wrap">
+        <input class="kanban-input" id="kanban-input" type="text" placeholder="Add a new task…"
+            onkeydown="if(event.key==='Enter') submitKanbanTask()"
+            onfocus="showTagDropdown()">
+        <div class="tag-strip hidden" id="tag-dropdown"></div>
+    </div>
 </div>
 
-<div class="tabs">
-    <button class="tab-btn active" onclick="switchTab(event, 'rocinante')">Rocinante Marketing</button>
-    <button class="tab-btn" onclick="switchTab(event, 'tree')">Tree Web Design</button>
-    <button class="tab-btn" onclick="switchTab(event, 'social')">Social Media</button>
-    <button class="tab-btn" onclick="switchTab(event, 'advertising')">Advertising</button>
-    <button class="tab-btn" onclick="switchTab(event, 'seo')">SEO</button>
-    <button class="tab-btn" onclick="switchTab(event, 'personal')">Personal</button>
-    <button class="tab-btn" onclick="switchTab(event, 'done')">Done</button>
+<!-- KANBAN BOARD -->
+<div class="kanban-board">
+    <div class="kanban-col" id="col-todo" data-status="todo">
+        <div class="kanban-col-header">
+            <span class="kanban-col-title">Backlog</span>
+            <span class="col-count" id="count-todo">0</span>
+        </div>
+        <div class="kanban-col-body" id="body-todo"></div>
+    </div>
+    <div class="kanban-col" id="col-inprogress" data-status="inprogress">
+        <div class="kanban-col-header">
+            <span class="kanban-col-title">This Week</span>
+            <span class="col-count" id="count-inprogress">0</span>
+        </div>
+        <div class="kanban-col-body" id="body-inprogress"></div>
+    </div>
+    <div class="kanban-col" id="col-lowpriority" data-status="lowpriority">
+        <div class="kanban-col-header">
+            <span class="kanban-col-title">Today</span>
+            <span class="col-count" id="count-lowpriority">0</span>
+        </div>
+        <div class="kanban-col-body" id="body-lowpriority"></div>
+    </div>
 </div>
 
-<div class="tab-content">
-    <div class="tab-pane task-pane active" id="tab-rocinante"></div>
-    <div class="tab-pane task-pane" id="tab-tree"></div>
-    <div class="tab-pane task-pane" id="tab-social"></div>
-    <div class="tab-pane task-pane" id="tab-advertising"></div>
-    <div class="tab-pane task-pane" id="tab-seo"></div>
-    <div class="tab-pane task-pane" id="tab-personal"></div>
-    <div class="tab-pane task-pane" id="tab-done"></div>
+</div><!-- /.kanban-area -->
 
-</div>
+<!-- CALENDAR SIDEBAR -->
+<div class="calendar-sidebar" id="calendar-sidebar"></div>
+
+</div><!-- /.content-area -->
+
 </div><!-- /.main-content -->
 
 <div class="footer-tools">
@@ -634,7 +562,6 @@
 
 <script>
 // ── SUPABASE CONFIG ───────────────────────────────────────────
-// Paste your values from supabase.com → Project Settings → API
 const SUPABASE_URL      = 'https://qksmczwjezamzbtmbrdo.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_05WMnG-0dhFX0zbQP3ph-Q_GVT7RewU';
 
@@ -644,8 +571,8 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ── AUTH ──────────────────────────────────────────────────────
 let currentUser = null;
 let currentToken = null;
-function showLogin()  { document.getElementById('login-screen').classList.remove('hidden'); }
-function hideLogin()  { document.getElementById('login-screen').classList.add('hidden'); }
+function showLogin() { document.getElementById('login-screen').classList.remove('hidden'); }
+function hideLogin() { document.getElementById('login-screen').classList.add('hidden'); }
 
 async function doLogin() {
     const email = document.getElementById('login-email').value.trim();
@@ -655,16 +582,12 @@ async function doLogin() {
     if (!email || !pass) { err.textContent = 'Email and password required.'; return; }
     btn.disabled = true; btn.textContent = 'Signing in…'; err.textContent = '';
     const { error } = await db.auth.signInWithPassword({ email, password: pass });
-    if (error) {
-        err.textContent = error.message;
-        btn.disabled = false; btn.textContent = 'Sign In';
-    }
-    // on success, onAuthStateChange fires → initApp()
+    if (error) { err.textContent = error.message; btn.disabled = false; btn.textContent = 'Sign In'; }
 }
 
 function doLogout() {
     currentUser = null; currentToken = null;
-    db.auth.signOut(); // fire and forget — don't await
+    db.auth.signOut();
     showLogin();
     document.getElementById('login-btn').disabled = false;
     document.getElementById('login-btn').textContent = 'Sign In';
@@ -675,8 +598,6 @@ db.auth.onAuthStateChange(async (event, session) => {
     if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
         currentUser = session.user;
         currentToken = session.access_token;
-        // SIGNED_IN fires on page load too — window.onload already handles that case
-        // Only call initApp() here for explicit logins (no existing session yet)
         if (event === 'SIGNED_IN' && !appReady) await initApp();
     } else if (event === 'SIGNED_OUT') {
         currentUser = null; currentToken = null; appReady = false; dataLoaded = false;
@@ -687,385 +608,440 @@ db.auth.onAuthStateChange(async (event, session) => {
     }
 });
 
-let appReady   = false; // guards against double-init on page load
-let dataLoaded = false; // blocks save() until load is complete
+let appReady   = false;
+let dataLoaded = false;
 
 async function initApp() {
     appReady = true;
     hideLogin();
+    renderTagPicker();
+    setupColumnDropzones();
+    renderCalendarWidget();
+    loadChecklist();
+    renderChecklist();
     await loadData();
     dataLoaded = true;
-    renderAllTaskPanes();
-    updateScoreboard();
+    renderKanban();
 }
 
-// ── TABS ──────────────────────────────────────────────────────
-function switchTab(event, name) {
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + name).classList.add('active');
-    event.currentTarget.classList.add('active');
-}
-
-// ── TASKS ─────────────────────────────────────────────────────
-const TASK_CATEGORIES = {
-    rocinante: {
-        label: 'Rocinante Marketing',
-        summary: 'Brand, site, outreach assets, client-facing messaging, and internal marketing ops.',
-        focus: ['Sharpen offers and messaging', 'Queue assets that ship this week']
-    },
-    tree: {
-        label: 'Tree Web Design',
-        summary: 'Builds, revisions, launch prep, client updates, and production work for tree service projects.',
-        focus: ['Keep deliverables moving', 'Clear revision blockers fast']
-    },
-    social: {
-        label: 'Social Media',
-        summary: 'Content creation, scheduling, posting cadence, and platform-specific follow-through.',
-        focus: ['Publish consistently', 'Turn ideas into scheduled content']
-    },
-    advertising: {
-        label: 'Advertising',
-        summary: 'Campaign setup, ad creative, budget changes, landing page alignment, and reporting follow-up.',
-        focus: ['Improve spend efficiency', 'Keep campaigns current']
-    },
-    seo: {
-        label: 'SEO',
-        summary: 'On-page fixes, content briefs, local SEO tasks, technical cleanup, and ranking support.',
-        focus: ['Ship ranking improvements', 'Close technical gaps']
-    },
-    personal: {
-        label: 'Personal',
-        summary: 'Home, errands, admin, appointments, and non-work tasks that still need a place in the system.',
-        focus: ['Keep life admin visible', 'Separate personal load from client work']
-    }
+// ── TAGS & DATA MODEL ─────────────────────────────────────────
+const TAGS = {
+    rocinante:   { label: 'Rocinante' },
+    tree:        { label: 'Tree Web Design' },
+    treeservice: { label: 'Tree Service News' },
+    whitelabel:  { label: 'White Label' },
+    personal:    { label: 'Personal' }
 };
+const TAG_KEYS = Object.keys(TAGS);
+const COLUMNS  = ['todo', 'inprogress', 'lowpriority'];
 
-const CATEGORY_KEYS = Object.keys(TASK_CATEGORIES);
-let taskLists = {};
+let tasks  = [];
 let nextId = 1;
-let draggedTask = null;
+let draggedTaskId = null;
+let activeFilters = new Set();
 
 function starterTasks() {
-    return {
-        rocinante: [
-            { id: 1, text: 'Tighten Rocinante homepage headline', done: false },
-            { id: 2, text: 'Draft this week\'s client proof post', done: false }
-        ],
-        tree: [
-            { id: 3, text: 'Finish Tree Web Design revision queue', done: false },
-            { id: 4, text: 'Send progress update to active tree client', done: false }
-        ],
-        social: [
-            { id: 5, text: 'Schedule three short-form posts', done: false }
-        ],
-        advertising: [
-            { id: 6, text: 'Review campaign CTR and pause weak ad set', done: false }
-        ],
-        seo: [
-            { id: 7, text: 'Update title tags for top local service pages', done: false }
-        ],
-        personal: [
-            { id: 8, text: 'Schedule personal appointment or errand', done: false }
-        ]
-    };
+    return [
+        { id: 1, text: 'Tighten Rocinante homepage headline',  tags: ['rocinante'],   status: 'todo' },
+        { id: 2, text: "Draft this week's client proof post",  tags: ['rocinante'],   status: 'todo' },
+        { id: 3, text: 'Finish Tree Web Design revision queue', tags: ['tree'],        status: 'inprogress' },
+        { id: 4, text: 'Send progress update to active client', tags: ['tree'],        status: 'todo' },
+        { id: 5, text: 'Schedule three short-form posts',       tags: ['treeservice'], status: 'todo' },
+        { id: 6, text: 'Schedule personal appointment',         tags: ['personal'],    status: 'todo' }
+    ];
 }
 
-function getCategoryTasks(type) {
-    if (!taskLists[type]) taskLists[type] = [];
-    return taskLists[type];
-}
-
-function submitTodo(type) {
-    const inp = document.getElementById(type + '-input');
-    const text = inp.value.trim();
-    if (!text) return;
-    getCategoryTasks(type).push({ id: nextId++, text, done: false });
-    inp.value = '';
-    renderAllTaskPanes();
-    updateScoreboard();
-    save();
-}
-
-function toggleTodo(type, id) {
-    const task = getCategoryTasks(type).find(x => x.id === id);
-    if (!task) return;
-    task.done = !task.done;
-    renderAllTaskPanes();
-    updateScoreboard();
-    save();
-}
-
-function deleteTodo(type, id) {
-    taskLists[type] = getCategoryTasks(type).filter(x => x.id !== id);
-    renderAllTaskPanes();
-    updateScoreboard();
-    save();
-}
-
-function editTodo(type, id) {
-    const task = getCategoryTasks(type).find(x => x.id === id);
-    if (!task) return;
-    const nextText = window.prompt('Edit task', task.text);
-    if (nextText === null) return;
-    const trimmed = nextText.trim();
-    if (!trimmed) return;
-    task.text = trimmed;
-    renderAllTaskPanes();
-    updateScoreboard();
-    save();
-}
-
-function moveTaskToTab(sourceType, id, target) {
-    const sourceTasks = getCategoryTasks(sourceType);
-    const idx = sourceTasks.findIndex(task => task.id === id);
-    if (idx === -1) return;
-    const [task] = sourceTasks.splice(idx, 1);
-    if (target === 'done') {
-        task.done = true;
-        sourceTasks.push(task);
+// ── FILTER ────────────────────────────────────────────────────
+function toggleFilter(tag) {
+    if (tag === 'all') {
+        activeFilters.clear();
     } else {
-        task.done = false;
-        getCategoryTasks(target).push(task);
+        if (activeFilters.has(tag)) activeFilters.delete(tag);
+        else activeFilters.add(tag);
     }
-    renderAllTaskPanes();
-    updateScoreboard();
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        const t = btn.dataset.tag;
+        btn.classList.toggle('active', t === 'all' ? activeFilters.size === 0 : activeFilters.has(t));
+    });
+    renderKanban();
+}
+
+// ── TAG PICKER ────────────────────────────────────────────────
+function renderTagPicker() {
+    const strip = document.getElementById('tag-dropdown');
+    strip.innerHTML = '';
+    strip.addEventListener('mousedown', e => e.preventDefault());
+    TAG_KEYS.forEach(key => {
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        pill.className = 'tag-pill';
+        pill.dataset.tag = key;
+        pill.textContent = TAGS[key].label;
+        pill.onclick = () => pill.classList.toggle('active');
+        strip.appendChild(pill);
+    });
+    const hint = document.createElement('span');
+    hint.className = 'tag-strip-hint';
+    hint.textContent = 'Enter to add';
+    strip.appendChild(hint);
+}
+
+function showTagDropdown() {
+    document.getElementById('tag-dropdown').classList.remove('hidden');
+    document.getElementById('kanban-add-bar').classList.add('focused');
+}
+
+function hideTagDropdown() {
+    document.getElementById('tag-dropdown').classList.add('hidden');
+    document.getElementById('kanban-add-bar').classList.remove('focused');
+}
+
+// ── ADD TASK ──────────────────────────────────────────────────
+function submitKanbanTask() {
+    const input = document.getElementById('kanban-input');
+    const text  = input.value.trim();
+    if (!text) return;
+    const selectedTags = [...document.querySelectorAll('.tag-pill.active')].map(p => p.dataset.tag);
+    tasks.push({ id: nextId++, text, tags: selectedTags, status: 'todo' });
+    input.value = '';
+    document.querySelectorAll('.tag-pill').forEach(p => p.classList.remove('active'));
+    hideTagDropdown();
+    renderKanban();
     save();
 }
 
-function makeTodoEl(type, task, isDoneView = false) {
-    const div = document.createElement('div');
-    div.className = 'todo-item' + (task.done ? ' done' : '');
-    div.draggable = true;
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = task.done;
-    cb.onchange = () => toggleTodo(type, task.id);
-    const sp = document.createElement('span');
-    sp.textContent = task.text;
-    sp.addEventListener('dblclick', () => editTodo(type, task.id));
-    const edit = document.createElement('button');
-    edit.className = 'todo-edit';
-    edit.textContent = 'Edit';
-    edit.onclick = () => editTodo(type, task.id);
-    const dl = document.createElement('button');
-    dl.className = 'todo-del';
-    dl.textContent = '×';
-    dl.onclick = () => deleteTodo(type, task.id);
-    div.append(cb, sp, edit, dl);
-    if (isDoneView) div.title = TASK_CATEGORIES[type].label;
-    div.addEventListener('dragstart', () => {
-        draggedTask = { sourceType: type, id: task.id };
-        div.classList.add('dragging');
+// ── TASK ACTIONS ──────────────────────────────────────────────
+let editingTaskId = null;
+
+function editTask(id) {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    editingTaskId = id;
+    document.getElementById('modal-text').value = task.text;
+    const checksEl = document.getElementById('modal-checkboxes');
+    checksEl.innerHTML = '';
+    TAG_KEYS.forEach(key => {
+        const label = document.createElement('label');
+        label.className = 'modal-check-row';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = key;
+        cb.checked = (task.tags || []).includes(key);
+        label.append(cb, document.createTextNode(TAGS[key].label));
+        checksEl.appendChild(label);
     });
-    div.addEventListener('dragend', () => {
-        draggedTask = null;
-        div.classList.remove('dragging');
-        document.querySelectorAll('.tab-btn.drag-target').forEach(btn => btn.classList.remove('drag-target'));
-    });
-    return div;
+    document.getElementById('edit-modal').classList.remove('hidden');
+    document.getElementById('modal-text').focus();
 }
 
+function closeModal() {
+    editingTaskId = null;
+    document.getElementById('edit-modal').classList.add('hidden');
+}
+
+function saveModal() {
+    const task = tasks.find(t => t.id === editingTaskId);
+    if (!task) { closeModal(); return; }
+    const text = document.getElementById('modal-text').value.trim();
+    if (!text) return;
+    task.text = text;
+    task.tags = [...document.querySelectorAll('#modal-checkboxes input:checked')].map(cb => cb.value);
+    closeModal();
+    renderKanban();
+    save();
+}
+
+function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    renderKanban();
+    save();
+}
+
+function markDone(id) {
+    const task = tasks.find(t => t.id === id);
+    if (task) { task.status = 'done'; renderKanban(); save(); }
+}
+
+// ── KANBAN RENDER ─────────────────────────────────────────────
+function makeKanbanCard(task) {
+    const card = document.createElement('div');
+    card.className = 'kanban-card' + (task.status === 'done' ? ' done' : '');
+    card.draggable = true;
+    card.dataset.id = task.id;
+
+    const header = document.createElement('div');
+    header.className = 'kanban-card-header';
+
+    const text = document.createElement('div');
+    text.className = 'kanban-card-text';
+    text.textContent = task.text;
+    text.addEventListener('dblclick', () => editTask(task.id));
+
+    const tagRow = document.createElement('div');
+    tagRow.className = 'kanban-card-tags';
+    (task.tags || []).forEach(key => {
+        const cfg = TAGS[key];
+        if (!cfg) return;
+        const chip = document.createElement('span');
+        chip.className = 'kanban-tag';
+        chip.textContent = cfg.label;
+        tagRow.appendChild(chip);
+    });
+
+    header.append(text, tagRow);
+
+    const actions = document.createElement('div');
+    actions.className = 'kanban-card-actions';
+    const doneBtn = document.createElement('button');
+    doneBtn.className = 'card-done-btn';
+    doneBtn.textContent = '✓';
+    doneBtn.title = 'Mark done';
+    doneBtn.onclick = () => markDone(task.id);
+    const editBtn = document.createElement('button');
+    editBtn.className = 'card-edit-btn';
+    editBtn.textContent = 'Edit';
+    editBtn.onclick = () => editTask(task.id);
+    const delBtn = document.createElement('button');
+    delBtn.className = 'card-del-btn';
+    delBtn.textContent = '×';
+    delBtn.onclick = () => deleteTask(task.id);
+    actions.append(doneBtn, editBtn, delBtn);
+
+    card.append(header, actions);
+
+    card.addEventListener('dragstart', e => {
+        draggedTaskId = task.id;
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => {
+        draggedTaskId = null;
+        card.classList.remove('dragging');
+        document.querySelectorAll('.kanban-col.drag-over').forEach(c => c.classList.remove('drag-over'));
+    });
+
+    return card;
+}
+
+function renderKanban() {
+    const filtered = activeFilters.size === 0
+        ? tasks
+        : tasks.filter(t => (t.tags || []).some(tag => activeFilters.has(tag)));
+
+    COLUMNS.forEach(status => {
+        const body     = document.getElementById('body-' + status);
+        const colTasks = filtered.filter(t => t.status === status);
+        document.getElementById('count-' + status).textContent = colTasks.length;
+        body.innerHTML = '';
+        if (!colTasks.length) {
+            const empty = document.createElement('div');
+            empty.className = 'kanban-empty';
+            empty.textContent = 'No tasks here.';
+            body.appendChild(empty);
+            return;
+        }
+        colTasks.forEach(task => body.appendChild(makeKanbanCard(task)));
+    });
+}
+
+// ── DAILY CHECKLIST ───────────────────────────────────────────
+const CHECKLIST_DEFAULTS = [
+    'Load / unload the dishes',
+    'Check mail',
+    'Make 20 calls'
+];
+
+let checklistData = { items: [...CHECKLIST_DEFAULTS], date: '', checked: [] };
+
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+function loadChecklist() {
+    const raw = localStorage.getItem('rocinante_checklist');
+    if (raw) { try { checklistData = JSON.parse(raw); } catch(e) {} }
+    if (!Array.isArray(checklistData.items) || checklistData.items.length === 0)
+        checklistData.items = [...CHECKLIST_DEFAULTS];
+    if (checklistData.date !== todayStr()) {
+        checklistData.date = todayStr();
+        checklistData.checked = [];
+        saveChecklist();
+    }
+}
+
+function saveChecklist() {
+    localStorage.setItem('rocinante_checklist', JSON.stringify(checklistData));
+}
+
+function toggleChecklistItem(idx) {
+    const i = checklistData.checked.indexOf(idx);
+    if (i === -1) checklistData.checked.push(idx);
+    else checklistData.checked.splice(i, 1);
+    saveChecklist();
+    renderChecklist();
+}
+
+function addChecklistItem() {
+    const input = document.getElementById('cl-input');
+    const text = input.value.trim();
+    if (!text) return;
+    checklistData.items.push(text);
+    input.value = '';
+    saveChecklist();
+    renderChecklist();
+}
+
+function renderChecklist() {
+    const sidebar = document.getElementById('checklist-sidebar');
+    const checked = new Set(checklistData.checked);
+    const total = checklistData.items.length;
+    const done  = checked.size;
+
+    sidebar.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'cl-card';
+
+    const header = document.createElement('div');
+    header.className = 'cl-header';
+    header.innerHTML = `<span>Daily Checklist</span><span class="cl-progress">${done}/${total}</span>`;
+
+    const itemsEl = document.createElement('div');
+    itemsEl.className = 'cl-items';
+    checklistData.items.forEach((item, idx) => {
+        const label = document.createElement('label');
+        label.className = 'cl-item' + (checked.has(idx) ? ' done' : '');
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = checked.has(idx);
+        cb.onchange = () => toggleChecklistItem(idx);
+        const span = document.createElement('span');
+        span.textContent = item;
+        label.append(cb, span);
+        itemsEl.appendChild(label);
+    });
+
+    const divider = document.createElement('hr');
+    divider.className = 'cl-divider';
+
+    const addRow = document.createElement('div');
+    addRow.className = 'cl-add-row';
+    addRow.innerHTML = `
+        <input class="cl-input" id="cl-input" type="text" placeholder="Add item…"
+            onkeydown="if(event.key==='Enter') addChecklistItem()">
+        <button class="cl-add-btn" onclick="addChecklistItem()">+</button>
+    `;
+
+    card.append(header, itemsEl, divider, addRow);
+    sidebar.appendChild(card);
+}
+
+// ── CALENDAR ──────────────────────────────────────────────────
 function renderCalendarWidget() {
     const now = new Date();
-    const monthLabel = now.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    const monthLabel   = now.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
     const weekdayLabel = now.toLocaleDateString(undefined, { weekday: 'long' });
     const first = new Date(now.getFullYear(), now.getMonth(), 1);
     const start = new Date(first);
     start.setDate(first.getDate() - first.getDay());
     const days = [];
     for (let i = 0; i < 35; i++) {
-        const day = new Date(start);
-        day.setDate(start.getDate() + i);
-        const muted = day.getMonth() !== now.getMonth();
-        const today = day.toDateString() === now.toDateString();
-        days.push(`<div class="calendar-day${muted ? ' muted' : ''}${today ? ' today' : ''}">${day.getDate()}</div>`);
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        const muted = d.getMonth() !== now.getMonth();
+        const today = d.toDateString() === now.toDateString();
+        days.push(`<div class="cal-day${muted ? ' muted' : ''}${today ? ' today' : ''}">${d.getDate()}</div>`);
     }
-    const weekDays = [];
     const weekStart = new Date(now);
     weekStart.setDate(now.getDate() - now.getDay());
+    const weekDays = [];
     for (let i = 0; i < 7; i++) {
-        const day = new Date(weekStart);
-        day.setDate(weekStart.getDate() + i);
-        const today = day.toDateString() === now.toDateString();
-        weekDays.push(`
-            <div class="calendar-week-pill${today ? ' today' : ''}">
-                <b>${day.toLocaleDateString(undefined, { weekday: 'short' })}</b>
-                <span>${day.getDate()}</span>
-            </div>
-        `);
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        const today = d.toDateString() === now.toDateString();
+        weekDays.push(`<div class="cal-week-pill${today ? ' today' : ''}">
+            <b>${d.toLocaleDateString(undefined, { weekday: 'short' })}</b>
+            <span>${d.getDate()}</span>
+        </div>`);
     }
-    return `
-        <div class="calendar-panel">
-            <div class="calendar-card">
-                <strong><span>Today</span><span>${monthLabel}</span></strong>
-                <div class="calendar-date">${now.getDate()}</div>
-                <div class="calendar-weekday">${weekdayLabel}</div>
-            </div>
-            <div class="calendar-card">
-                <strong><span>This Week</span><span>Day ${now.getDay() + 1}</span></strong>
-                <div class="calendar-week-strip">${weekDays.join('')}</div>
-            </div>
-            <div class="calendar-card">
-                <strong><span>Month View</span><span>${monthLabel}</span></strong>
-                <div class="calendar-month">
-                    <div class="calendar-head">Sun</div>
-                    <div class="calendar-head">Mon</div>
-                    <div class="calendar-head">Tue</div>
-                    <div class="calendar-head">Wed</div>
-                    <div class="calendar-head">Thu</div>
-                    <div class="calendar-head">Fri</div>
-                    <div class="calendar-head">Sat</div>
-                    ${days.join('')}
-                </div>
+    document.getElementById('calendar-sidebar').innerHTML = `
+        <div class="cal-card">
+            <div class="cal-card-title"><span>Today</span><span>${monthLabel}</span></div>
+            <div class="cal-date">${now.getDate()}</div>
+            <div class="cal-weekday">${weekdayLabel}</div>
+        </div>
+        <div class="cal-card">
+            <div class="cal-card-title"><span>This Week</span><span>Day ${now.getDay() + 1}</span></div>
+            <div class="cal-week-strip">${weekDays.join('')}</div>
+        </div>
+        <div class="cal-card">
+            <div class="cal-card-title"><span>Month View</span><span>${monthLabel}</span></div>
+            <div class="cal-month">
+                <div class="cal-head">Sun</div><div class="cal-head">Mon</div><div class="cal-head">Tue</div>
+                <div class="cal-head">Wed</div><div class="cal-head">Thu</div><div class="cal-head">Fri</div>
+                <div class="cal-head">Sat</div>
+                ${days.join('')}
             </div>
         </div>
     `;
 }
 
-function renderCategoryPane(type) {
-    const pane = document.getElementById('tab-' + type);
-    const meta = TASK_CATEGORIES[type];
-    const tasks = getCategoryTasks(type);
-    const activeTasks = tasks.filter(task => !task.done);
-
-    pane.innerHTML = `
-        <div class="task-board">
-            <div class="task-col">
-                <div class="task-col-label">${meta.label}</div>
-                <div class="task-summary">${meta.summary}</div>
-                <div class="todo-add-row">
-                    <input class="todo-input" id="${type}-input" type="text" placeholder="Add task..."
-                        onkeydown="if(event.key==='Enter') submitTodo('${type}')">
-                    <button class="todo-add-btn" onclick="submitTodo('${type}')">Add Task</button>
-                </div>
-                <div class="todo-list task-col-scroll" id="${type}-active"></div>
-            </div>
-            <div class="task-col">
-                <div class="task-col-label">Calendar</div>
-                ${renderCalendarWidget()}
-            </div>
-        </div>
-    `;
-
-    const listEl = document.getElementById(type + '-active');
-    if (!activeTasks.length) {
-        const empty = document.createElement('div');
-        empty.className = 'task-empty';
-        empty.textContent = 'No open tasks in this lane.';
-        listEl.appendChild(empty);
-        return;
-    }
-    activeTasks.forEach(task => listEl.appendChild(makeTodoEl(type, task)));
-}
-
-function renderDonePane() {
-    const pane = document.getElementById('tab-done');
-    pane.innerHTML = `<div class="done-grid">${CATEGORY_KEYS.map(type => `
-        <div class="done-group">
-            <div class="task-col-label">${TASK_CATEGORIES[type].label}</div>
-            <div class="todo-list" id="${type}-done"></div>
-        </div>
-    `).join('')}</div>`;
-
-    CATEGORY_KEYS.forEach(type => {
-        const doneEl = document.getElementById(type + '-done');
-        const doneTasks = getCategoryTasks(type).filter(task => task.done);
-        if (!doneTasks.length) {
-            const empty = document.createElement('div');
-            empty.className = 'task-empty';
-            empty.textContent = 'Nothing finished here yet.';
-            doneEl.appendChild(empty);
-            return;
-        }
-        doneTasks.forEach(task => doneEl.appendChild(makeTodoEl(type, task, true)));
-    });
-}
-
-function renderAllTaskPanes() {
-    CATEGORY_KEYS.forEach(renderCategoryPane);
-    renderDonePane();
-}
-
-function updateScoreboard() {
-    const openCount = CATEGORY_KEYS.reduce((sum, key) => sum + getCategoryTasks(key).filter(task => !task.done).length, 0);
-    const doneCount = CATEGORY_KEYS.reduce((sum, key) => sum + getCategoryTasks(key).filter(task => task.done).length, 0);
-    document.getElementById('s1').textContent = openCount;
-    document.getElementById('s2').textContent = doneCount;
-    document.getElementById('s3').textContent = getCategoryTasks('rocinante').filter(task => !task.done).length;
-    document.getElementById('s4').textContent = getCategoryTasks('tree').filter(task => !task.done).length;
-    document.getElementById('s5').textContent =
-        getCategoryTasks('social').filter(task => !task.done).length +
-        getCategoryTasks('advertising').filter(task => !task.done).length +
-        getCategoryTasks('seo').filter(task => !task.done).length;
-}
-
-function setupTabDropzones() {
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        const label = btn.textContent.trim();
-        const target = label === 'Rocinante Marketing' ? 'rocinante'
-            : label === 'Tree Web Design' ? 'tree'
-            : label === 'Social Media' ? 'social'
-            : label === 'Advertising' ? 'advertising'
-            : label === 'SEO' ? 'seo'
-            : label === 'Personal' ? 'personal'
-            : 'done';
-        btn.dataset.targetTab = target;
-        btn.addEventListener('dragover', e => {
-            if (!draggedTask) return;
+// ── COLUMN DROP ZONES ─────────────────────────────────────────
+function setupColumnDropzones() {
+    COLUMNS.forEach(status => {
+        const col = document.getElementById('col-' + status);
+        col.addEventListener('dragover', e => {
+            if (!draggedTaskId) return;
             e.preventDefault();
-            btn.classList.add('drag-target');
+            col.classList.add('drag-over');
         });
-        btn.addEventListener('dragleave', () => btn.classList.remove('drag-target'));
-        btn.addEventListener('drop', e => {
-            if (!draggedTask) return;
+        col.addEventListener('dragleave', e => {
+            if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+        });
+        col.addEventListener('drop', e => {
+            if (!draggedTaskId) return;
             e.preventDefault();
-            btn.classList.remove('drag-target');
-            moveTaskToTab(draggedTask.sourceType, draggedTask.id, target);
+            col.classList.remove('drag-over');
+            const task = tasks.find(t => t.id === draggedTaskId);
+            if (task && task.status !== status) {
+                task.status = status;
+                renderKanban();
+            
+                save();
+            }
         });
     });
 }
 
 // ── PERSISTENCE ───────────────────────────────────────────────
 function gatherData() {
-    return {
-        v: '4.0',
-        savedAt:      Date.now(),
-        taskLists,
-        nextId
-    };
+    return { v: '5.0', savedAt: Date.now(), tasks, nextId };
 }
 
 function applyData(data) {
-    if (data.taskLists) {
-        taskLists = data.taskLists;
-    } else if (data.workTodos || data.personalTodos || data.todos) {
-        const legacyWork = data.workTodos || data.todos || [];
-        const legacyPersonal = data.personalTodos || [];
-        taskLists = {
-            rocinante: legacyWork,
-            tree: legacyPersonal,
-            social: [],
-            advertising: [],
-            seo: [],
-            personal: []
-        };
+    if (Array.isArray(data.tasks)) {
+        tasks = data.tasks;
+    } else if (data.taskLists) {
+        // Migrate from v4 tab-based format
+        const tagMap = { rocinante: 'rocinante', tree: 'tree', social: 'treeservice', personal: 'personal' };
+        tasks = [];
+        for (const [cat, items] of Object.entries(data.taskLists)) {
+            const tag = tagMap[cat];
+            if (!tag || !Array.isArray(items)) continue;
+            for (const t of items) {
+                tasks.push({ id: t.id, text: t.text, tags: [tag], status: t.done ? 'done' : 'todo' });
+            }
+        }
     } else {
-        taskLists = starterTasks();
+        tasks = starterTasks();
     }
-    CATEGORY_KEYS.forEach(type => {
-        if (!Array.isArray(taskLists[type])) taskLists[type] = [];
-    });
-    if (data.nextId) nextId = data.nextId;
-    else {
-        const ids = CATEGORY_KEYS.flatMap(type => getCategoryTasks(type).map(task => task.id || 0));
-        nextId = Math.max(0, ...ids) + 1;
+    if (!Array.isArray(tasks)) tasks = starterTasks();
+    if (data.nextId) {
+        nextId = data.nextId;
+    } else {
+        nextId = Math.max(0, ...tasks.map(t => t.id || 0)) + 1;
     }
-    renderAllTaskPanes();
-    updateScoreboard();
+    renderKanban();
+
 }
 
-// Save: instant to localStorage + debounced to Supabase
 let cloudSaveTimer;
 function setSyncDot(state) {
     const dot = document.getElementById('sync-dot');
@@ -1073,14 +1049,16 @@ function setSyncDot(state) {
     dot.className = 'sync-status' + (state ? ' ' + state : '');
     dot.textContent = labels[state] || 'Idle';
 }
+
 function save() {
     if (!dataLoaded) return;
     const data = gatherData();
-    localStorage.setItem('rocinante_v4_0', JSON.stringify(data));
+    localStorage.setItem('rocinante_v5_0', JSON.stringify(data));
     setSyncDot('syncing');
     clearTimeout(cloudSaveTimer);
     cloudSaveTimer = setTimeout(() => saveToCloud(data), 800);
 }
+
 async function saveToCloud(data) {
     if (!currentUser || !currentToken) { setSyncDot(''); return; }
     if (location.protocol === 'file:') { setSyncDot('synced'); setTimeout(() => setSyncDot(''), 2000); return; }
@@ -1096,21 +1074,11 @@ async function saveToCloud(data) {
             body: JSON.stringify({ user_id: currentUser.id, data, updated_at: new Date().toISOString() }),
             signal: AbortSignal.timeout(8000)
         });
-        if (resp.ok) {
-            setSyncDot('synced');
-            setTimeout(() => setSyncDot(''), 3000);
-        } else {
-            const msg = await resp.text();
-            console.error('Save failed:', resp.status, msg);
-            setSyncDot('error');
-        }
-    } catch(e) {
-        console.error('Save exception:', e.message);
-        setSyncDot('error');
-    }
+        if (resp.ok) { setSyncDot('synced'); setTimeout(() => setSyncDot(''), 3000); }
+        else { console.error('Save failed:', resp.status, await resp.text()); setSyncDot('error'); }
+    } catch(e) { console.error('Save exception:', e.message); setSyncDot('error'); }
 }
 
-// Load: pick whichever of Supabase or localStorage is newer
 async function loadData() {
     let cloudData = null;
     if (currentUser && currentToken && location.protocol !== 'file:') {
@@ -1128,13 +1096,11 @@ async function loadData() {
     }
 
     let localData = null;
-    for (const key of ['rocinante_v4_0','rocinante_v3_3','rocinante_v3_2','rocinante_v3_1']) {
+    for (const key of ['rocinante_v5_0', 'rocinante_v4_0', 'rocinante_v3_3', 'rocinante_v3_2', 'rocinante_v3_1']) {
         const raw = localStorage.getItem(key);
-        if (raw) { try { localData = JSON.parse(raw); break; } catch(e){} }
+        if (raw) { try { localData = JSON.parse(raw); break; } catch(e) {} }
     }
 
-    // Use whichever copy has the later timestamp — protects against
-    // the cloud being behind when the tab was closed before the 2s debounce fired
     let best = cloudData || localData;
     if (cloudData && localData) {
         best = (localData.savedAt || 0) > (cloudData.savedAt || 0) ? localData : cloudData;
@@ -1142,35 +1108,33 @@ async function loadData() {
 
     if (best) {
         try { applyData(best); } catch(e) { console.error('applyData error:', e); }
-        localStorage.setItem('rocinante_v4_0', JSON.stringify(gatherData()));
+        localStorage.setItem('rocinante_v5_0', JSON.stringify(gatherData()));
         if (cloudData) { setSyncDot('synced'); setTimeout(() => setSyncDot(''), 3000); }
     } else {
-        taskLists = starterTasks();
-        nextId = 9;
-        renderAllTaskPanes();
-        updateScoreboard();
+        tasks = starterTasks();
+        nextId = 7;
+        renderKanban();
+    
     }
 }
 
 function exportData() {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(gatherData())], {type:'application/json'}));
-    a.download = `rocinante_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(gatherData())], { type: 'application/json' }));
+    a.download = `rocinante_backup_${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
 }
 function importData(e) {
-    const file = e.target.files[0]; if(!file) return;
+    const file = e.target.files[0]; if (!file) return;
     const r = new FileReader();
-    r.onload = ev => { localStorage.setItem('rocinante_v4_0', ev.target.result); location.reload(); };
+    r.onload = ev => { localStorage.setItem('rocinante_v5_0', ev.target.result); location.reload(); };
     r.readAsText(file);
 }
 function clearCompleted() {
-    if (!confirm('Clear all completed tasks from every tab?')) return;
-    CATEGORY_KEYS.forEach(type => {
-        taskLists[type] = getCategoryTasks(type).filter(task => !task.done);
-    });
-    renderAllTaskPanes();
-    updateScoreboard();
+    if (!confirm('Clear all done tasks?')) return;
+    tasks = tasks.filter(t => t.status !== 'done');
+    renderKanban();
+
     save();
 }
 function toggleTheme() {
@@ -1180,16 +1144,17 @@ function toggleTheme() {
 }
 
 // ── INIT ──────────────────────────────────────────────────────
-// Apply saved theme immediately (before auth resolves)
-if (localStorage.getItem('theme') === 'light') {
-    document.body.classList.add('light');
-}
-setupTabDropzones();
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); hideTagDropdown(); } });
+document.addEventListener('click', e => {
+    const bar = document.getElementById('kanban-add-bar');
+    if (bar && !bar.contains(e.target)) hideTagDropdown();
+});
+if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
+
 window.onload = async () => {
     if (localStorage.getItem('theme') === 'light') {
         document.getElementById('theme-btn').textContent = '☾ Dark';
     }
-    // Check for existing session (auto-login if token is still valid)
     const { data: { session } } = await db.auth.getSession();
     if (session) {
         currentUser = session.user;
@@ -1199,11 +1164,6 @@ window.onload = async () => {
         showLogin();
     }
 };
-document.addEventListener('input', save);
-document.addEventListener('change', e => {
-    // only save on checkbox/select changes — not file inputs or other controls
-    if (e.target.type === 'checkbox' || e.target.tagName === 'SELECT') save();
-});
 </script>
 </body>
 </html>
