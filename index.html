@@ -1395,7 +1395,11 @@ async function analyzeMail(base64) {
         body: JSON.stringify({ imageBase64: base64, mediaType: 'image/jpeg' }),
         signal: AbortSignal.timeout(30000),
     });
-    if (!resp.ok) throw new Error('Analysis failed (' + resp.status + ')');
+    if (!resp.ok) {
+        let msg = 'Analysis failed (' + resp.status + ')';
+        try { const b = await resp.json(); if (b.error) msg = b.error; } catch {}
+        throw new Error(msg);
+    }
     return resp.json();
 }
 
