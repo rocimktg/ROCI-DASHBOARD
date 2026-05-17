@@ -888,6 +888,8 @@ async function initApp() {
     renderKanban();
     await loadMailItems();
     renderMailKanban();
+    const savedTab = localStorage.getItem('roci_active_tab');
+    if (savedTab && savedTab !== 'productivity') switchTab(savedTab);
 }
 
 // ── TAGS & DATA MODEL ─────────────────────────────────────────
@@ -1418,6 +1420,7 @@ function switchTab(name) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
     document.getElementById('tab-productivity').classList.toggle('hidden', name !== 'productivity');
     document.getElementById('tab-mail').classList.toggle('hidden', name !== 'mail');
+    localStorage.setItem('roci_active_tab', name);
 }
 
 function mailPriorityAndCategory(ai) {
@@ -1552,7 +1555,7 @@ async function handleMailImage(file) {
 
         if (currentUser && currentToken && location.protocol !== 'file:') {
             setStatus('Saving…');
-            const resp = await fetch(`${SUPABASE_URL}/rest/v1/mail_items`, {
+            const postItem = async (data) => fetch(`${SUPABASE_URL}/rest/v1/mail_items`, {
                 method: 'POST',
                 headers: {
                     'apikey': SUPABASE_ANON_KEY,
@@ -1560,10 +1563,16 @@ async function handleMailImage(file) {
                     'Content-Type': 'application/json',
                     'Prefer': 'return=minimal',
                 },
-                body: JSON.stringify(item),
+                body: JSON.stringify(data),
                 signal: AbortSignal.timeout(8000),
             });
-            if (!resp.ok) console.error('mail save failed:', await resp.text());
+            let resp = await postItem(item);
+            if (!resp.ok) {
+                // details column may not exist yet — retry without it
+                const { details: _d, ...itemBase } = item;
+                resp = await postItem(itemBase);
+                if (!resp.ok) console.error('mail save failed:', await resp.text());
+            }
         }
 
         mailItems.unshift(item);
