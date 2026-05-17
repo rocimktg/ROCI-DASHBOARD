@@ -4,12 +4,20 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const PROMPT = `Analyze this photo of physical mail or a bill. Return ONLY valid JSON — no markdown, no code blocks, no explanation:
+const PROMPT = `Analyze this photo of physical mail or a bill. Extract every detail you can read. Return ONLY valid JSON — no markdown, no code blocks, no explanation:
 
 {
   "vendor": "company or sender name",
-  "amount": null or numeric dollar amount (number only, no dollar sign),
+  "amount": null or numeric amount due (number only, no dollar sign),
   "due_date": null or "YYYY-MM-DD",
+  "is_past_due": true or false,
+  "billing_period": null or "e.g. May 1 – May 31, 2025",
+  "previous_balance": null or number,
+  "new_charges": null or number,
+  "late_fees": null or number,
+  "account_last4": null or "last 4 digits of account number only",
+  "payment_website": null or "website url",
+  "payment_phone": null or "phone number",
   "is_recurring": true or false,
   "bill_type": "medical" or "hospital" or "regular" or "general",
   "summary": "one sentence description, under 20 words"
@@ -18,11 +26,13 @@ const PROMPT = `Analyze this photo of physical mail or a bill. Return ONLY valid
 Rules:
 - bill_type "medical": doctor, clinic, physician, pharmacy bills
 - bill_type "hospital": hospital, ER, surgery, inpatient bills
-- bill_type "regular": utilities, subscriptions, credit cards, phone, internet, insurance (typically recurring)
+- bill_type "regular": utilities, subscriptions, credit cards, phone, internet, insurance
 - bill_type "general": everything else — notices, statements, junk mail, letters
 - is_recurring: true only if clearly a monthly/recurring charge
-- Do NOT include account numbers, card numbers, routing numbers, or SSNs in any field
-- amount must be a plain number like 42.50, not a string`;
+- is_past_due: true if the bill shows overdue/past due language or the due date has passed
+- account_last4: ONLY the last 4 digits — never include full account numbers
+- Do NOT include full account numbers, card numbers, routing numbers, or SSNs anywhere
+- All numeric fields are plain numbers like 42.50, not strings`;
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -55,7 +65,7 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 512,
+        max_tokens: 1024,
         messages: [{
           role: 'user',
           content: [
@@ -80,10 +90,13 @@ exports.handler = async (event) => {
 
     const data = await response.json();
     const text = data.content?.[0]?.text || '{}';
-    const match = text.match(/\{[\s\S]*?\}/);
+
     let parsed = {};
-    if (match) {
-      try { parsed = JSON.parse(match[0]); } catch {}
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) { try { parsed = JSON.parse(match[0]); } catch {} }
     }
 
     return {

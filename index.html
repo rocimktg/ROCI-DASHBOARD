@@ -29,6 +29,7 @@
       amount numeric(10,2),
       is_recurring boolean default false,
       status text default 'inbox',
+      details jsonb,
       created_at timestamptz default now()
     );
     alter table mail_items enable row level security;
@@ -557,6 +558,71 @@
         @media (max-width: 520px) {
             .tab-btn { font-size: 11px; padding: 7px 10px; }
         }
+
+        /* MAIL DETAIL MODAL */
+        .mail-detail-overlay {
+            position: fixed; inset: 0; z-index: 600;
+            background: rgba(0,0,0,0.72); display: flex;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .mail-detail-overlay.hidden { display: none; }
+        .mail-detail-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; width: 100%; max-width: 500px;
+            max-height: 88vh; overflow-y: auto;
+            display: flex; flex-direction: column;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+        }
+        .mail-detail-header {
+            display: flex; align-items: flex-start; gap: 14px;
+            padding: 18px 18px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+        }
+        .mail-detail-img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; flex-shrink: 0; cursor: pointer; }
+        .mail-detail-img-ph { width: 80px; height: 80px; border-radius: 8px; background: var(--border); flex-shrink: 0; }
+        .mail-detail-header-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+        .mail-detail-vendor { font-size: 17px; font-weight: 800; color: var(--text); }
+        .mail-detail-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+        .mail-detail-summary { font-size: 12px; color: var(--muted); line-height: 1.45; }
+        .mail-detail-close {
+            background: none; border: none; cursor: pointer;
+            color: var(--muted); font-size: 22px; line-height: 1; padding: 0; flex-shrink: 0;
+        }
+        .mail-detail-close:hover { color: var(--text); }
+        .mail-detail-body { padding: 4px 18px 8px; }
+        .mail-detail-row {
+            display: flex; justify-content: space-between; align-items: baseline;
+            padding: 9px 0; border-bottom: 1px solid var(--border); gap: 16px;
+        }
+        .mail-detail-row:last-child { border-bottom: none; }
+        .mail-detail-label {
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.8px; color: var(--muted); flex-shrink: 0; white-space: nowrap;
+        }
+        .mail-detail-value { font-size: 13px; color: var(--text); text-align: right; word-break: break-word; }
+        .mail-detail-value.big   { font-size: 20px; font-weight: 800; color: var(--accent); }
+        .mail-detail-value.alert { color: var(--danger); font-weight: 700; }
+        .mail-detail-value.link  { color: var(--accent); text-decoration: none; }
+        .mail-detail-value.link:hover { text-decoration: underline; }
+        .mail-detail-footer {
+            display: flex; gap: 8px; padding: 14px 18px;
+            border-top: 1px solid var(--border); flex-shrink: 0;
+        }
+        .mail-detail-move {
+            flex: 1; background: var(--card); color: var(--muted); border: 1px solid var(--border);
+            padding: 8px 10px; border-radius: 8px; font-size: 12px; font-family: inherit; cursor: pointer;
+        }
+        .mail-detail-move:focus { outline: none; border-color: var(--accent); }
+        .mail-detail-del {
+            background: transparent; border: 1px solid var(--border); color: var(--muted);
+            padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit;
+        }
+        .mail-detail-del:hover { background: #450a0a; border-color: #991b1b; color: var(--danger); }
+        body.light .mail-detail-card { box-shadow: 0 4px 32px rgba(0,0,0,0.12); }
+        body.light .mail-detail-move { background: #e2e8f0; }
+        @media (max-width: 520px) {
+            .mail-detail-overlay { padding: 0; align-items: flex-end; }
+            .mail-detail-card { border-radius: 16px 16px 0 0; max-height: 92vh; max-width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -574,6 +640,28 @@
         <div class="modal-actions">
             <button class="modal-cancel-btn" onclick="closeModal()">Cancel</button>
             <button class="modal-save-btn" onclick="saveModal()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- MAIL DETAIL MODAL -->
+<div class="mail-detail-overlay hidden" id="mail-detail-overlay" onclick="if(event.target===this) closeMailDetail()">
+    <div class="mail-detail-card">
+        <div class="mail-detail-header">
+            <div id="md-img-wrap"></div>
+            <div class="mail-detail-header-info">
+                <div class="mail-detail-vendor" id="md-vendor"></div>
+                <div class="mail-detail-badges" id="md-badges"></div>
+                <div class="mail-detail-summary" id="md-summary"></div>
+            </div>
+            <button class="mail-detail-close" onclick="closeMailDetail()">×</button>
+        </div>
+        <div class="mail-detail-body" id="md-body"></div>
+        <div class="mail-detail-footer">
+            <select class="mail-detail-move" id="md-move">
+                <option value="">Move to…</option>
+            </select>
+            <button class="mail-detail-del" id="md-del">Delete</button>
         </div>
     </div>
 </div>
@@ -1332,12 +1420,21 @@ function switchTab(name) {
     document.getElementById('tab-mail').classList.toggle('hidden', name !== 'mail');
 }
 
-function mailPriorityAndCategory({ is_recurring, bill_type }) {
-    if (is_recurring)             return { priority: 'low',    category: 'Regular Bills' };
-    if (bill_type === 'medical')  return { priority: 'high',   category: 'Medical Bills' };
-    if (bill_type === 'hospital') return { priority: 'high',   category: 'Hospital Bills' };
-    if (bill_type === 'general')  return { priority: 'medium', category: 'General Action Items' };
-    return { priority: 'high', category: 'General Action Items' };
+function mailPriorityAndCategory(ai) {
+    const { is_recurring, bill_type, is_past_due, due_date } = ai;
+    const pastDue = is_past_due || (due_date && new Date(due_date + 'T00:00:00') < new Date());
+
+    let category;
+    if (is_recurring)             category = 'Regular Bills';
+    else if (bill_type === 'medical')  category = 'Medical Bills';
+    else if (bill_type === 'hospital') category = 'Hospital Bills';
+    else                               category = 'General Action Items';
+
+    if (pastDue)      return { priority: 'high', category };
+    if (is_recurring) return { priority: 'low',  category };
+    if (bill_type === 'medical' || bill_type === 'hospital') return { priority: 'high', category };
+    if (bill_type === 'general') return { priority: 'medium', category };
+    return { priority: 'high', category };
 }
 
 function compressImage(file, maxBytes = 200 * 1024) {
@@ -1441,6 +1538,16 @@ async function handleMailImage(file) {
             is_recurring: !!ai.is_recurring,
             status: 'inbox',
             created_at: new Date().toISOString(),
+            details: {
+                is_past_due:      !!ai.is_past_due,
+                billing_period:   ai.billing_period   || null,
+                previous_balance: typeof ai.previous_balance === 'number' ? ai.previous_balance : null,
+                new_charges:      typeof ai.new_charges      === 'number' ? ai.new_charges      : null,
+                late_fees:        typeof ai.late_fees         === 'number' ? ai.late_fees         : null,
+                account_last4:    ai.account_last4   || null,
+                payment_website:  ai.payment_website || null,
+                payment_phone:    ai.payment_phone   || null,
+            },
         };
 
         if (currentUser && currentToken && location.protocol !== 'file:') {
@@ -1553,9 +1660,106 @@ function renderMailKanban() {
     }
 }
 
+let mailDetailId = null;
+
+function openMailDetail(id) {
+    const item = mailItems.find(i => i.id === id);
+    if (!item) return;
+    mailDetailId = id;
+    const d = item.details || {};
+
+    // Image
+    const imgWrap = document.getElementById('md-img-wrap');
+    imgWrap.innerHTML = '';
+    if (item.image_url) {
+        const img = document.createElement('img');
+        img.className = 'mail-detail-img';
+        img.src = item.image_url;
+        img.alt = '';
+        img.onclick = () => window.open(item.image_url, '_blank');
+        imgWrap.appendChild(img);
+    } else {
+        const ph = document.createElement('div');
+        ph.className = 'mail-detail-img-ph';
+        imgWrap.appendChild(ph);
+    }
+
+    // Header
+    document.getElementById('md-vendor').textContent  = item.vendor;
+    document.getElementById('md-summary').textContent = item.summary;
+
+    const badges = document.getElementById('md-badges');
+    badges.innerHTML = '';
+    const pb = document.createElement('span');
+    pb.className = 'mail-priority ' + item.priority;
+    pb.textContent = { high: 'High Priority', medium: 'Medium', low: 'Low' }[item.priority] || item.priority;
+    badges.appendChild(pb);
+    if (d.is_past_due) {
+        const od = document.createElement('span');
+        od.className = 'mail-priority high';
+        od.textContent = 'PAST DUE';
+        badges.appendChild(od);
+    }
+    const cb = document.createElement('span');
+    cb.className = 'mail-category';
+    cb.style.cssText = 'font-size:10px;font-weight:600;color:var(--muted);';
+    cb.textContent = item.category;
+    badges.appendChild(cb);
+
+    // Body rows
+    const body = document.getElementById('md-body');
+    body.innerHTML = '';
+    const rows = [];
+    if (item.amount != null)         rows.push(['Amount Due',         '$' + Number(item.amount).toFixed(2), 'big']);
+    if (item.due_date)               rows.push(['Due Date',           item.due_date + (d.is_past_due ? ' — PAST DUE' : ''), d.is_past_due ? 'alert' : '']);
+    if (d.billing_period)            rows.push(['Billing Period',     d.billing_period,  '']);
+    if (d.previous_balance != null)  rows.push(['Previous Balance',   '$' + Number(d.previous_balance).toFixed(2), '']);
+    if (d.new_charges != null)       rows.push(['New Charges',        '$' + Number(d.new_charges).toFixed(2), '']);
+    if (d.late_fees != null && d.late_fees > 0) rows.push(['Late Fees',  '$' + Number(d.late_fees).toFixed(2), 'alert']);
+    if (d.account_last4)             rows.push(['Account',            '···· ' + d.account_last4, '']);
+    if (d.payment_phone)             rows.push(['Payment Phone',      d.payment_phone, '']);
+    if (d.payment_website)           rows.push(['Payment Website',    d.payment_website, 'link']);
+    rows.push(['Recurring',          item.is_recurring ? 'Yes' : 'No', '']);
+
+    rows.forEach(([label, value, cls]) => {
+        const row = document.createElement('div');
+        row.className = 'mail-detail-row';
+        const l = document.createElement('span');
+        l.className = 'mail-detail-label';
+        l.textContent = label;
+        const v = cls === 'link' ? document.createElement('a') : document.createElement('span');
+        v.className = 'mail-detail-value' + (cls ? ' ' + cls : '');
+        v.textContent = value;
+        if (cls === 'link') { v.href = value.startsWith('http') ? value : 'https://' + value; v.target = '_blank'; v.rel = 'noopener'; }
+        row.append(l, v);
+        body.appendChild(row);
+    });
+
+    // Footer
+    const sel = document.getElementById('md-move');
+    sel.innerHTML = '<option value="">Move to…</option>' +
+        MAIL_STATUSES.filter(s => s !== item.status)
+            .map(s => `<option value="${escHtml(s)}">${escHtml(MAIL_STATUS_LABELS[s])}</option>`).join('');
+    sel.onchange = () => { if (sel.value) { updateMailStatus(id, sel.value); closeMailDetail(); } };
+
+    document.getElementById('md-del').onclick = () => { closeMailDetail(); deleteMailItem(id); };
+
+    document.getElementById('mail-detail-overlay').classList.remove('hidden');
+}
+
+function closeMailDetail() {
+    document.getElementById('mail-detail-overlay').classList.add('hidden');
+    mailDetailId = null;
+}
+
 function makeMailCard(item) {
     const card = document.createElement('div');
     card.className = 'mail-card';
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', e => {
+        if (e.target.closest('.mail-card-footer')) return;
+        openMailDetail(item.id);
+    });
 
     const top = document.createElement('div');
     top.className = 'mail-card-top';
@@ -1630,7 +1834,7 @@ function makeMailCard(item) {
 }
 
 // ── INIT ──────────────────────────────────────────────────────
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); hideTagDropdown(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeMailDetail(); hideTagDropdown(); } });
 document.addEventListener('click', e => {
     const bar = document.getElementById('kanban-add-bar');
     if (bar && !bar.contains(e.target)) hideTagDropdown();
