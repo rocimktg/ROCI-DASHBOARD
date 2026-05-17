@@ -581,8 +581,14 @@ async function doLogin() {
     const err   = document.getElementById('login-error');
     if (!email || !pass) { err.textContent = 'Email and password required.'; return; }
     btn.disabled = true; btn.textContent = 'Signing in…'; err.textContent = '';
-    const { error } = await db.auth.signInWithPassword({ email, password: pass });
-    if (error) { err.textContent = error.message; btn.disabled = false; btn.textContent = 'Sign In'; }
+    try {
+        const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('Request timed out — check your connection')), 12000));
+        const { error } = await Promise.race([db.auth.signInWithPassword({ email, password: pass }), timeout]);
+        if (error) { err.textContent = error.message; btn.disabled = false; btn.textContent = 'Sign In'; }
+    } catch(e) {
+        err.textContent = e.message || 'Sign-in failed';
+        btn.disabled = false; btn.textContent = 'Sign In';
+    }
 }
 
 function doLogout() {
@@ -598,7 +604,18 @@ db.auth.onAuthStateChange(async (event, session) => {
     if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
         currentUser = session.user;
         currentToken = session.access_token;
-        if (event === 'SIGNED_IN' && !appReady) await initApp();
+        if (event === 'SIGNED_IN' && !appReady) {
+            try {
+                await initApp();
+            } catch(e) {
+                appReady = false;
+                const err = document.getElementById('login-error');
+                if (err) err.textContent = 'Load error: ' + (e.message || e);
+                document.getElementById('login-btn').disabled = false;
+                document.getElementById('login-btn').textContent = 'Sign In';
+                showLogin();
+            }
+        }
     } else if (event === 'SIGNED_OUT') {
         currentUser = null; currentToken = null; appReady = false; dataLoaded = false;
         showLogin();
@@ -1159,7 +1176,7 @@ window.onload = async () => {
     if (session) {
         currentUser = session.user;
         currentToken = session.access_token;
-        await initApp();
+        try { await initApp(); } catch(e) { appReady = false; showLogin(); console.error('initApp error:', e); }
     } else {
         showLogin();
     }
