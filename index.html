@@ -16,8 +16,37 @@
     create policy "own data" on dashboard_state
       for all using (auth.uid() = user_id);
 
+    -- MAIL & BILLS (run after the above):
+    create table mail_items (
+      id uuid default gen_random_uuid() primary key,
+      user_id uuid references auth.users not null,
+      image_url text,
+      vendor text,
+      summary text,
+      category text,
+      priority text,
+      due_date date,
+      amount numeric(10,2),
+      is_recurring boolean default false,
+      status text default 'inbox',
+      created_at timestamptz default now()
+    );
+    alter table mail_items enable row level security;
+    create policy "own mail" on mail_items
+      for all using (auth.uid() = user_id);
+
+    -- Storage bucket (Supabase Dashboard → Storage → New bucket):
+    -- Name: mail-images  Private: ON
+    -- Then add this storage policy in SQL editor:
+    create policy "own images" on storage.objects
+      for all using (
+        bucket_id = 'mail-images'
+        and auth.uid()::text = (storage.foldername(name))[1]
+      );
+
     Then: Authentication → Settings → disable "Confirm email"
           Authentication → Users → Add user (your email + password)
+          Netlify Dashboard → Site → Environment variables → add CLAUDE_API_KEY
     -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -446,6 +475,87 @@
             .kanban-card-text { font-size: 15px; }
             .card-edit-btn, .card-del-btn, .card-done-btn { opacity: 1; }
         }
+
+        /* TABS */
+        .tab-bar {
+            display: flex; gap: 4px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 4px; flex-shrink: 0;
+        }
+        .tab-btn {
+            flex: 1; padding: 8px 16px; border-radius: 7px;
+            border: none; cursor: pointer; font-size: 12px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            background: transparent; color: var(--muted); font-family: inherit;
+        }
+        .tab-btn.active { background: var(--accent); color: var(--bg); }
+        .tab-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+        .tab-panel.hidden { display: none !important; }
+
+        /* MAIL SCAN BAR */
+        .mail-scan-bar {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 14px; background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; flex-shrink: 0;
+        }
+        .scan-btn {
+            background: var(--accent); color: var(--bg); border: none;
+            padding: 8px 20px; border-radius: 8px; cursor: pointer;
+            font-size: 13px; font-weight: 800; font-family: inherit; white-space: nowrap;
+        }
+        .scan-btn:disabled { opacity: 0.5; cursor: default; }
+        .scan-status { font-size: 12px; color: var(--muted); }
+
+        /* MAIL BOARD */
+        .mail-board {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+            flex: 1; min-height: 0; overflow: hidden;
+        }
+
+        /* MAIL CARD */
+        .mail-card {
+            background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+            padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
+        }
+        .mail-card:hover { border-color: var(--muted); }
+        .mail-card-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+        .mail-priority {
+            font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px;
+            padding: 2px 8px; border-radius: 10px; white-space: nowrap;
+        }
+        .mail-priority.high   { background: rgba(239,68,68,0.15);  color: #ef4444; }
+        .mail-priority.medium { background: rgba(249,115,22,0.15); color: #f97316; }
+        .mail-priority.low    { background: rgba(234,179,8,0.15);  color: #eab308; }
+        .mail-category { font-size: 10px; color: var(--muted); font-weight: 600; text-align: right; }
+        .mail-card-body { display: flex; gap: 10px; }
+        .mail-thumb { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+        .mail-thumb-ph { width: 60px; height: 60px; border-radius: 6px; background: var(--border); flex-shrink: 0; }
+        .mail-card-info { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+        .mail-vendor { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mail-summary { font-size: 11px; color: var(--muted); line-height: 1.4; }
+        .mail-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+        .mail-amount { font-size: 12px; font-weight: 700; color: var(--accent); }
+        .mail-due    { font-size: 11px; color: var(--muted); }
+        .mail-card-footer { display: flex; gap: 6px; align-items: center; }
+        .mail-move-select {
+            flex: 1; background: var(--card); color: var(--muted); border: 1px solid var(--border);
+            padding: 3px 6px; border-radius: 6px; font-size: 10px; font-family: inherit; cursor: pointer;
+        }
+        .mail-move-select:focus { outline: none; border-color: var(--accent); }
+        body.light .mail-card         { background: #f8fafc; }
+        body.light .mail-move-select  { background: #e2e8f0; }
+
+        @media (max-width: 900px) {
+            .mail-board { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 820px) {
+            .mail-board { grid-template-columns: 1fr; height: auto; overflow: visible; }
+            .mail-board .kanban-col { overflow: visible; }
+            .mail-board .kanban-col-body { overflow: visible; }
+        }
+        @media (max-width: 520px) {
+            .tab-btn { font-size: 11px; padding: 7px 10px; }
+        }
     </style>
 </head>
 <body>
@@ -483,7 +593,12 @@
 <!-- APP -->
 <div class="main-content">
 
+<div class="tab-bar">
+    <button class="tab-btn active" data-tab="productivity" onclick="switchTab('productivity')">Productivity</button>
+    <button class="tab-btn" data-tab="mail" onclick="switchTab('mail')">Mail &amp; Bills</button>
+</div>
 
+<div id="tab-productivity" class="tab-panel">
 <div class="content-area">
 
 <!-- DAILY CHECKLIST -->
@@ -544,6 +659,49 @@
 <div class="calendar-sidebar" id="calendar-sidebar"></div>
 
 </div><!-- /.content-area -->
+</div><!-- #tab-productivity -->
+
+<div id="tab-mail" class="tab-panel hidden">
+
+<div class="mail-scan-bar">
+    <button class="scan-btn" id="scan-btn" onclick="document.getElementById('mail-file-input').click()">Scan Mail</button>
+    <span class="scan-status" id="scan-status"></span>
+    <input type="file" id="mail-file-input" accept="image/*" capture="environment" style="display:none"
+        onchange="if(this.files[0]) handleMailImage(this.files[0])">
+</div>
+
+<div class="mail-board">
+    <div class="kanban-col" id="mail-col-inbox">
+        <div class="kanban-col-header">
+            <span class="kanban-col-title">Inbox</span>
+            <span class="col-count" id="mail-count-inbox">0</span>
+        </div>
+        <div class="kanban-col-body" id="mail-body-inbox"></div>
+    </div>
+    <div class="kanban-col" id="mail-col-review">
+        <div class="kanban-col-header">
+            <span class="kanban-col-title">In Review</span>
+            <span class="col-count" id="mail-count-review">0</span>
+        </div>
+        <div class="kanban-col-body" id="mail-body-review"></div>
+    </div>
+    <div class="kanban-col" id="mail-col-action">
+        <div class="kanban-col-header">
+            <span class="kanban-col-title">Needs Action</span>
+            <span class="col-count" id="mail-count-action">0</span>
+        </div>
+        <div class="kanban-col-body" id="mail-body-action"></div>
+    </div>
+    <div class="kanban-col" id="mail-col-done">
+        <div class="kanban-col-header">
+            <span class="kanban-col-title">Done</span>
+            <span class="col-count" id="mail-count-done">0</span>
+        </div>
+        <div class="kanban-col-body" id="mail-body-done"></div>
+    </div>
+</div>
+
+</div><!-- #tab-mail -->
 
 </div><!-- /.main-content -->
 
@@ -639,6 +797,8 @@ async function initApp() {
     await loadData();
     dataLoaded = true;
     renderKanban();
+    await loadMailItems();
+    renderMailKanban();
 }
 
 // ── TAGS & DATA MODEL ─────────────────────────────────────────
@@ -1158,6 +1318,310 @@ function toggleTheme() {
     const light = document.body.classList.toggle('light');
     localStorage.setItem('theme', light ? 'light' : 'dark');
     document.getElementById('theme-btn').textContent = light ? '☾ Dark' : '☀ Light';
+}
+
+// ── MAIL & BILLS ──────────────────────────────────────────────
+let mailItems = [];
+const MAIL_STATUSES = ['inbox', 'review', 'action', 'done'];
+const MAIL_STATUS_LABELS = { inbox: 'Inbox', review: 'In Review', action: 'Needs Action', done: 'Done' };
+
+function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    document.getElementById('tab-productivity').classList.toggle('hidden', name !== 'productivity');
+    document.getElementById('tab-mail').classList.toggle('hidden', name !== 'mail');
+}
+
+function mailPriorityAndCategory({ is_recurring, bill_type }) {
+    if (is_recurring)             return { priority: 'low',    category: 'Regular Bills' };
+    if (bill_type === 'medical')  return { priority: 'high',   category: 'Medical Bills' };
+    if (bill_type === 'hospital') return { priority: 'high',   category: 'Hospital Bills' };
+    if (bill_type === 'general')  return { priority: 'medium', category: 'General Action Items' };
+    return { priority: 'high', category: 'General Action Items' };
+}
+
+function compressImage(file, maxBytes = 200 * 1024) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const blobUrl = URL.createObjectURL(file);
+        img.onerror = () => { URL.revokeObjectURL(blobUrl); reject(new Error('Image load failed')); };
+        img.onload = () => {
+            URL.revokeObjectURL(blobUrl);
+            const MAX_DIM = 1200;
+            let w = img.naturalWidth, h = img.naturalHeight;
+            if (w > MAX_DIM || h > MAX_DIM) {
+                const r = Math.min(MAX_DIM / w, MAX_DIM / h);
+                w = Math.round(w * r); h = Math.round(h * r);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            (async () => {
+                let lo = 0.3, hi = 0.92, blob;
+                for (let i = 0; i < 6; i++) {
+                    const q = (lo + hi) / 2;
+                    blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', q));
+                    if (blob.size <= maxBytes) lo = q; else hi = q;
+                }
+                blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', lo));
+                resolve(blob);
+            })();
+        };
+        img.src = blobUrl;
+    });
+}
+
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function uploadMailImage(blob) {
+    const path = `${currentUser.id}/${Date.now()}.jpg`;
+    const { error: upErr } = await db.storage.from('mail-images').upload(path, blob, { contentType: 'image/jpeg' });
+    if (upErr) throw new Error('Upload failed: ' + upErr.message);
+    const { data, error: urlErr } = await db.storage.from('mail-images').createSignedUrl(path, 31536000);
+    if (urlErr) throw new Error('Signed URL failed: ' + urlErr.message);
+    return data.signedUrl;
+}
+
+async function analyzeMail(base64) {
+    const resp = await fetch('/.netlify/functions/analyze-mail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mediaType: 'image/jpeg' }),
+        signal: AbortSignal.timeout(30000),
+    });
+    if (!resp.ok) throw new Error('Analysis failed (' + resp.status + ')');
+    return resp.json();
+}
+
+function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function handleMailImage(file) {
+    const btn = document.getElementById('scan-btn');
+    const statusEl = document.getElementById('scan-status');
+    const setStatus = t => { statusEl.textContent = t; };
+    btn.disabled = true;
+    try {
+        setStatus('Compressing image…');
+        const compressed = await compressImage(file);
+
+        let imageUrl = null;
+        if (currentUser && currentToken && location.protocol !== 'file:') {
+            setStatus('Uploading…');
+            imageUrl = await uploadMailImage(compressed);
+        }
+
+        setStatus('Reading with AI…');
+        const base64 = await blobToBase64(compressed);
+        const ai = await analyzeMail(base64);
+
+        const { priority, category } = mailPriorityAndCategory(ai);
+        const item = {
+            id: crypto.randomUUID(),
+            user_id: currentUser.id,
+            image_url: imageUrl,
+            vendor: ai.vendor || 'Unknown Sender',
+            summary: ai.summary || '',
+            category,
+            priority,
+            due_date: ai.due_date || null,
+            amount: (typeof ai.amount === 'number') ? ai.amount : null,
+            is_recurring: !!ai.is_recurring,
+            status: 'inbox',
+            created_at: new Date().toISOString(),
+        };
+
+        if (currentUser && currentToken && location.protocol !== 'file:') {
+            setStatus('Saving…');
+            const resp = await fetch(`${SUPABASE_URL}/rest/v1/mail_items`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${currentToken}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal',
+                },
+                body: JSON.stringify(item),
+                signal: AbortSignal.timeout(8000),
+            });
+            if (!resp.ok) console.error('mail save failed:', await resp.text());
+        }
+
+        mailItems.unshift(item);
+        saveMailLocal();
+        renderMailKanban();
+        setStatus('Done!');
+        setTimeout(() => setStatus(''), 3000);
+    } catch(e) {
+        setStatus('Error: ' + e.message);
+        setTimeout(() => setStatus(''), 6000);
+    } finally {
+        btn.disabled = false;
+        document.getElementById('mail-file-input').value = '';
+    }
+}
+
+async function updateMailStatus(id, status) {
+    const item = mailItems.find(i => i.id === id);
+    if (!item) return;
+    item.status = status;
+    saveMailLocal();
+    renderMailKanban();
+    if (currentUser && currentToken && location.protocol !== 'file:') {
+        fetch(`${SUPABASE_URL}/rest/v1/mail_items?id=eq.${id}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${currentToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status }),
+        }).catch(() => {});
+    }
+}
+
+async function deleteMailItem(id) {
+    if (!confirm('Delete this mail item?')) return;
+    mailItems = mailItems.filter(i => i.id !== id);
+    saveMailLocal();
+    renderMailKanban();
+    if (currentUser && currentToken && location.protocol !== 'file:') {
+        fetch(`${SUPABASE_URL}/rest/v1/mail_items?id=eq.${id}`, {
+            method: 'DELETE',
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentToken}` },
+        }).catch(() => {});
+    }
+}
+
+function saveMailLocal() {
+    localStorage.setItem('rocinante_mail_v1', JSON.stringify(mailItems));
+}
+
+async function loadMailItems() {
+    if (!currentUser || !currentToken || location.protocol === 'file:') {
+        const raw = localStorage.getItem('rocinante_mail_v1');
+        if (raw) { try { mailItems = JSON.parse(raw); } catch(e) {} }
+        return;
+    }
+    try {
+        const resp = await fetch(
+            `${SUPABASE_URL}/rest/v1/mail_items?user_id=eq.${currentUser.id}&order=created_at.desc`,
+            { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentToken}` },
+              signal: AbortSignal.timeout(8000) }
+        );
+        if (resp.ok) {
+            mailItems = await resp.json();
+            saveMailLocal();
+        } else {
+            const raw = localStorage.getItem('rocinante_mail_v1');
+            if (raw) { try { mailItems = JSON.parse(raw); } catch(e) {} }
+        }
+    } catch(e) {
+        const raw = localStorage.getItem('rocinante_mail_v1');
+        if (raw) { try { mailItems = JSON.parse(raw); } catch(e) {} }
+    }
+}
+
+function renderMailKanban() {
+    for (const status of MAIL_STATUSES) {
+        const body  = document.getElementById('mail-body-' + status);
+        const count = document.getElementById('mail-count-' + status);
+        if (!body) continue;
+        const items = mailItems.filter(i => i.status === status);
+        count.textContent = items.length;
+        body.innerHTML = '';
+        if (!items.length) {
+            const empty = document.createElement('div');
+            empty.className = 'kanban-empty';
+            empty.textContent = 'No items here.';
+            body.appendChild(empty);
+            continue;
+        }
+        items.forEach(item => body.appendChild(makeMailCard(item)));
+    }
+}
+
+function makeMailCard(item) {
+    const card = document.createElement('div');
+    card.className = 'mail-card';
+
+    const top = document.createElement('div');
+    top.className = 'mail-card-top';
+    const badge = document.createElement('span');
+    badge.className = 'mail-priority ' + item.priority;
+    badge.textContent = { high: 'High Priority', medium: 'Medium', low: 'Low' }[item.priority] || item.priority;
+    const cat = document.createElement('span');
+    cat.className = 'mail-category';
+    cat.textContent = item.category;
+    top.append(badge, cat);
+
+    const body = document.createElement('div');
+    body.className = 'mail-card-body';
+    if (item.image_url) {
+        const img = document.createElement('img');
+        img.className = 'mail-thumb';
+        img.src = item.image_url;
+        img.alt = '';
+        img.loading = 'lazy';
+        body.appendChild(img);
+    } else {
+        const ph = document.createElement('div');
+        ph.className = 'mail-thumb-ph';
+        body.appendChild(ph);
+    }
+    const info = document.createElement('div');
+    info.className = 'mail-card-info';
+    const vendor = document.createElement('div');
+    vendor.className = 'mail-vendor';
+    vendor.textContent = item.vendor;
+    const summary = document.createElement('div');
+    summary.className = 'mail-summary';
+    summary.textContent = item.summary;
+    info.append(vendor, summary);
+    if (item.amount || item.due_date) {
+        const meta = document.createElement('div');
+        meta.className = 'mail-meta';
+        if (item.amount != null) {
+            const amt = document.createElement('span');
+            amt.className = 'mail-amount';
+            amt.textContent = '$' + Number(item.amount).toFixed(2);
+            meta.appendChild(amt);
+        }
+        if (item.due_date) {
+            const due = document.createElement('span');
+            due.className = 'mail-due';
+            due.textContent = 'Due ' + item.due_date;
+            meta.appendChild(due);
+        }
+        info.appendChild(meta);
+    }
+    body.appendChild(info);
+
+    const footer = document.createElement('div');
+    footer.className = 'mail-card-footer';
+    const sel = document.createElement('select');
+    sel.className = 'mail-move-select';
+    sel.innerHTML = '<option value="">Move to…</option>' +
+        MAIL_STATUSES.filter(s => s !== item.status)
+            .map(s => `<option value="${escHtml(s)}">${escHtml(MAIL_STATUS_LABELS[s])}</option>`)
+            .join('');
+    sel.onchange = () => { if (sel.value) { updateMailStatus(item.id, sel.value); sel.value = ''; } };
+    const del = document.createElement('button');
+    del.className = 'card-del-btn';
+    del.textContent = '×';
+    del.title = 'Delete';
+    del.onclick = () => deleteMailItem(item.id);
+    footer.append(sel, del);
+
+    card.append(top, body, footer);
+    return card;
 }
 
 // ── INIT ──────────────────────────────────────────────────────
