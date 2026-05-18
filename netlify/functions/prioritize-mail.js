@@ -46,89 +46,31 @@ exports.handler = async (event) => {
     ].join('\n');
   }).join('\n\n');
 
-  const prompt = `Today is ${today}. You are a financial assistant reviewing mail items for a business owner and helping them prioritize what needs immediate attention.
+  const prompt = `Today is ${today}. Prioritize these ${mailItems.length} mail items for a business owner. Return ONLY valid JSON, no markdown.
 
-Here are all the non-archived mail items (${mailItems.length} total):
-
+ITEMS:
 ${itemsText}
 
-PRIORITY RULES — apply in this order:
+PRIORITY RULES (apply in order):
+1. HIGH PRIORITY: Tax/IRS/government notices, legal, collections, past-due with fees, penalties, service disruption threats
+2. MEDIUM PRIORITY: Utilities, insurance, subscriptions, medical bills, credit cards, vendor bills
+3. LOW PRIORITY: Recurring bills before due date, non-urgent vendors
+4. INFORMATIONAL: Zero-balance statements, EXPLICITLY confirmed paid/autopaid/complete/done items, notices requiring no action
 
-1. HIGH PRIORITY (red) — Act immediately:
-   - Tax notices, IRS, state/local tax agencies, Texas Comptroller
-   - Legal notices, court documents, compliance requirements
-   - Creditors, collections, attorneys, debt collectors
-   - Any notice with penalties, late fees, threats of service disruption, or legal action
-   - Government payment notices
-   - Past-due bills with late fees
+CRITICAL: Never assume paid unless item explicitly says paid/autopaid/complete/done. When uncertain, use higher priority.
 
-2. MEDIUM PRIORITY (orange) — Act this week:
-   - Regular utility bills (electric, water, gas, internet)
-   - Insurance premiums
-   - Subscriptions and vendor bills
-   - Medical and hospital bills not yet past due
-   - Credit card statements
-
-3. LOW PRIORITY (yellow) — Act when convenient:
-   - Recurring bills well before their due date
-   - Non-urgent vendor communications
-   - Upcoming renewals
-
-4. INFORMATIONAL (purple) — No action required:
-   - Statements explicitly showing zero balance
-   - Explicit confirmations of a payment already made or marked complete/autopaid/done
-   - General updates and notices without payment request
-   - Policy documents without action required
-
-5. ARCHIVE CANDIDATE (suggestions only — never auto-archive):
-   - Junk mail and marketing materials
-   - Duplicate notices already captured elsewhere
-   - Already-handled informational mail that is confirmed complete
-
-CRITICAL RULES:
-- Never assume a bill is paid unless the item EXPLICITLY says it is paid, autopaid, complete, or done. If uncertain, mark it as needing review.
-- When in doubt between two priority levels, always choose the higher one.
-- Any item with a dollar amount and a due date should be at least Medium Priority unless confirmed paid.
-
-Return ONLY valid JSON with this exact structure (no markdown, no code blocks):
-
+Return this JSON (no extra text):
 {
   "title": "Mail Priority Report — ${today}",
-  "summary": "2-3 sentence plain English summary of the most urgent items and overall status of this batch",
+  "summary": "2-3 sentences on the most urgent items and overall status",
   "itemsScanned": ${mailItems.length},
-  "highestPriorityItems": [
-    {
-      "id": "exact item id from the data above",
-      "sender": "sender/vendor name",
-      "recommendedPriority": "High Priority",
-      "reason": "One sentence explaining why this priority level",
-      "recommendedAction": "One sentence describing the specific next action"
-    }
-  ],
-  "priorityUpdates": [
-    {
-      "id": "exact item id from the data above",
-      "priority": "High Priority"
-    }
-  ],
-  "archiveCandidates": [
-    {
-      "id": "exact item id from the data above",
-      "reason": "One sentence explaining why this can be archived"
-    }
-  ],
-  "fullReportText": "Complete readable plain-text report covering: (1) Executive summary, (2) All items listed by priority with reasoning and recommended action, (3) A section titled PROCESS IMPROVEMENT SUGGESTIONS that includes: new mail types encountered that do not fit current categories, suggested new categories or priority rules, data quality issues observed (missing amounts, unclear vendors, etc), workflow improvements, and anything that would make future prioritization scans more accurate.",
-  "processImprovements": [
-    "Specific improvement suggestion 1",
-    "Specific improvement suggestion 2"
-  ]
+  "highestPriorityItems": [{"id":"exact_id","sender":"name","recommendedPriority":"High Priority","reason":"one sentence","recommendedAction":"one sentence"}],
+  "priorityUpdates": [{"id":"exact_id","priority":"High Priority"}],
+  "archiveCandidates": [{"id":"exact_id","reason":"one sentence"}],
+  "processImprovements": ["suggestion 1","suggestion 2","suggestion 3"]
 }
 
-Rules for the JSON:
-- highestPriorityItems: include all items, ordered from most urgent to least urgent
-- priorityUpdates: include ALL ${mailItems.length} items — one entry per item
-- archiveCandidates: only genuine archive candidates; leave empty array if none
-- priority values must be exactly one of: "High Priority", "Medium Priority", "Low Priority", "Informational"`;
+Rules: Include ALL ${mailItems.length} items in priorityUpdates. Order highestPriorityItems most-to-least urgent. Priority values must be exactly: "High Priority", "Medium Priority", "Low Priority", or "Informational".`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -140,7 +82,7 @@ Rules for the JSON:
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2048,
+        max_tokens: 800,
         messages: [{ role: 'user', content: prompt }],
       }),
     });

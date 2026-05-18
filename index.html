@@ -2081,7 +2081,7 @@ async function prioritizeMail() {
             title: result.title || ('Mail Priority Report — ' + new Date().toLocaleDateString()),
             summary: result.summary || '',
             itemsScanned: result.itemsScanned || nonArchived.length,
-            fullReportText: result.fullReportText || '',
+            fullReportText: buildReportText(result, nonArchived),
             structuredResults: result,
             mailItemIdsScanned: nonArchived.map(i => i.id),
         };
@@ -2318,6 +2318,49 @@ function downloadCurrentReport() {
     a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain' }));
     a.download = `mail-priority-report-${date}.txt`;
     a.click();
+}
+
+function buildReportText(result, scannedItems) {
+    const date = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    const lines = [];
+    lines.push(`MAIL PRIORITY REPORT — ${date}`);
+    lines.push('='.repeat(50));
+    lines.push('');
+    if (result.summary) {
+        lines.push('EXECUTIVE SUMMARY');
+        lines.push('-'.repeat(40));
+        lines.push(result.summary);
+        lines.push('');
+    }
+    const items = result.highestPriorityItems || [];
+    if (items.length) {
+        lines.push('PRIORITIZED ITEMS');
+        lines.push('-'.repeat(40));
+        items.forEach((item, i) => {
+            lines.push(`${i + 1}. [${item.recommendedPriority || ''}] ${item.sender || ''}`);
+            if (item.reason)           lines.push(`   Reason: ${item.reason}`);
+            if (item.recommendedAction) lines.push(`   Action: ${item.recommendedAction}`);
+            lines.push('');
+        });
+    }
+    const candidates = result.archiveCandidates || [];
+    if (candidates.length) {
+        lines.push('ARCHIVE CANDIDATES (Recommendations Only)');
+        lines.push('-'.repeat(40));
+        candidates.forEach(ac => {
+            const found = scannedItems.find(i => i.id === ac.id);
+            lines.push(`• ${found ? found.vendor : ac.id}${ac.reason ? ': ' + ac.reason : ''}`);
+        });
+        lines.push('');
+    }
+    const improvements = result.processImprovements || [];
+    if (improvements.length) {
+        lines.push('PROCESS IMPROVEMENT SUGGESTIONS');
+        lines.push('-'.repeat(40));
+        improvements.forEach((tip, i) => lines.push(`${i + 1}. ${tip}`));
+        lines.push('');
+    }
+    return lines.join('\n');
 }
 
 function saveReportsLocal() {
