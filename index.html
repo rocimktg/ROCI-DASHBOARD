@@ -933,6 +933,7 @@
     <div class="mail-view-tabs">
         <button class="mail-view-tab active" data-mailview="inbox" onclick="switchMailView('inbox')">Inbox</button>
         <button class="mail-view-tab" data-mailview="tax" onclick="switchMailView('tax')">Tax</button>
+        <button class="mail-view-tab" data-mailview="rocinante" onclick="switchMailView('rocinante')">Rocinante</button>
         <button class="mail-view-tab" data-mailview="archive" onclick="switchMailView('archive')">Archive</button>
         <button class="mail-view-tab" data-mailview="reports" onclick="switchMailView('reports')">Reports</button>
     </div>
@@ -975,6 +976,14 @@
         <span class="col-count" id="tax-count">0</span>
     </div>
     <div class="archive-grid" id="tax-items"></div>
+</div>
+
+<div id="mail-view-rocinante" class="tax-view" style="display:none">
+    <div class="tax-header" style="color:var(--accent)">
+        <span>Rocinante Marketing</span>
+        <span class="col-count" id="rocinante-count">0</span>
+    </div>
+    <div class="archive-grid" id="rocinante-items"></div>
 </div>
 
 <div id="mail-view-archive" class="archive-view" style="display:none">
@@ -2110,11 +2119,13 @@ function switchMailView(view) {
         btn.classList.toggle('active', btn.dataset.mailview === view);
     });
     document.getElementById('mail-view-inbox').style.display   = view === 'inbox'   ? '' : 'none';
-    document.getElementById('mail-view-tax').style.display     = view === 'tax'     ? '' : 'none';
-    document.getElementById('mail-view-archive').style.display = view === 'archive' ? '' : 'none';
-    document.getElementById('mail-view-reports').style.display = view === 'reports' ? '' : 'none';
-    if (view === 'tax')     renderTaxView();
-    if (view === 'archive') renderArchive();
+    document.getElementById('mail-view-tax').style.display        = view === 'tax'        ? '' : 'none';
+    document.getElementById('mail-view-rocinante').style.display  = view === 'rocinante'  ? '' : 'none';
+    document.getElementById('mail-view-archive').style.display    = view === 'archive'    ? '' : 'none';
+    document.getElementById('mail-view-reports').style.display    = view === 'reports'    ? '' : 'none';
+    if (view === 'tax')        renderTaxView();
+    if (view === 'rocinante')  renderRocinanteView();
+    if (view === 'archive')    renderArchive();
     if (view === 'reports') renderReportsList();
 }
 
@@ -2277,6 +2288,24 @@ function prioritizeMail() {
     } finally {
         btn.disabled = false;
     }
+}
+
+const ROCINANTE_PATTERN = /rocinante\s*(marketing)?(,?\s*llc)?/i;
+
+function isRocinanteItem(item) {
+    return ROCINANTE_PATTERN.test(`${item.vendor || ''} ${item.summary || ''}`);
+}
+
+function renderRocinanteView() {
+    const container = document.getElementById('rocinante-items');
+    const items = mailItems.filter(i => i.status !== 'archived' && isRocinanteItem(i));
+    document.getElementById('rocinante-count').textContent = items.length;
+    container.innerHTML = '';
+    if (!items.length) {
+        container.innerHTML = '<div class="kanban-empty">No Rocinante Marketing mail items found.</div>';
+        return;
+    }
+    items.forEach(item => container.appendChild(makeMailCard(item)));
 }
 
 function renderTaxView() {
