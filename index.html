@@ -623,6 +623,132 @@
             .mail-detail-overlay { padding: 0; align-items: flex-end; }
             .mail-detail-card { border-radius: 16px 16px 0 0; max-height: 92vh; max-width: 100%; }
         }
+
+        /* MAIL ACTION BAR */
+        .mail-action-bar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 14px; background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; flex-shrink: 0; flex-wrap: wrap;
+        }
+        .mail-view-tabs {
+            margin-left: auto; display: flex; gap: 2px;
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: 6px; padding: 2px;
+        }
+        .mail-view-tab {
+            padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer;
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+            background: transparent; color: var(--muted); font-family: inherit; white-space: nowrap;
+        }
+        .mail-view-tab.active { background: var(--accent); color: var(--bg); }
+        .prioritize-btn {
+            background: transparent; color: var(--accent); border: 1px solid var(--accent);
+            padding: 7px 16px; border-radius: 8px; cursor: pointer;
+            font-size: 12px; font-weight: 800; font-family: inherit; white-space: nowrap;
+        }
+        .prioritize-btn:disabled { opacity: 0.5; cursor: default; }
+        .prioritize-btn:hover:not(:disabled) { background: rgba(194,138,58,0.15); }
+
+        /* EXTENDED PRIORITY BADGES */
+        .mail-priority.informational { background: rgba(168,85,247,0.15); color: #a855f7; }
+        .mail-priority.archive-cand  { background: rgba(59,130,246,0.15);  color: #3b82f6; }
+
+        /* ARCHIVE VIEW */
+        .archive-view {
+            flex: 1; min-height: 0; overflow-y: auto; padding: 4px 0;
+            display: flex; flex-direction: column;
+        }
+        .archive-header {
+            display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--accent); padding: 4px 2px 10px;
+        }
+        .archive-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px; padding: 2px;
+        }
+
+        /* REPORTS VIEW */
+        .reports-view { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 0; }
+        .reports-table { width: 100%; border-collapse: collapse; }
+        .reports-table th {
+            font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--muted); padding: 8px 14px; text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .reports-table td {
+            padding: 11px 14px; border-bottom: 1px solid var(--border);
+            font-size: 12px; color: var(--text); vertical-align: middle;
+        }
+        .reports-table tr:last-child td { border-bottom: none; }
+        .reports-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .report-go-btn {
+            background: transparent; border: 1px solid var(--accent); color: var(--accent);
+            padding: 4px 14px; border-radius: 6px; cursor: pointer;
+            font-size: 11px; font-weight: 700; font-family: inherit;
+        }
+        .report-go-btn:hover { background: var(--accent); color: var(--bg); }
+        .reports-empty {
+            padding: 40px 20px; text-align: center; color: var(--muted); font-size: 14px;
+        }
+
+        /* REPORT DETAIL OVERLAY */
+        .report-detail-overlay {
+            position: fixed; inset: 0; z-index: 700;
+            background: rgba(0,0,0,0.75); display: flex;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .report-detail-overlay.hidden { display: none; }
+        .report-detail-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; width: 100%; max-width: 680px;
+            max-height: 90vh; display: flex; flex-direction: column;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+        }
+        .report-detail-header {
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+            padding: 18px 20px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+        }
+        .report-detail-title { font-size: 15px; font-weight: 800; color: var(--text); }
+        .report-detail-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+        .report-detail-close {
+            background: none; border: none; cursor: pointer;
+            color: var(--muted); font-size: 22px; line-height: 1; flex-shrink: 0; padding: 0;
+        }
+        .report-detail-close:hover { color: var(--text); }
+        .report-detail-body { flex: 1; overflow-y: auto; padding: 14px 20px 8px; }
+        .report-section-title {
+            font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--accent); margin: 16px 0 8px;
+        }
+        .report-section-title:first-child { margin-top: 0; }
+        .report-full-text {
+            font-size: 12px; color: var(--text); line-height: 1.75;
+            white-space: pre-wrap; font-family: inherit;
+        }
+        .report-priority-item {
+            background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 10px 14px; margin-bottom: 6px; display: flex; flex-direction: column; gap: 4px;
+        }
+        .report-item-sender { font-size: 13px; font-weight: 700; color: var(--text); }
+        .report-item-reason { font-size: 12px; color: var(--muted); line-height: 1.4; }
+        .report-item-action { font-size: 12px; color: var(--accent); font-style: italic; }
+        .report-detail-footer {
+            display: flex; gap: 8px; padding: 12px 20px; align-items: center;
+            border-top: 1px solid var(--border); flex-shrink: 0;
+        }
+        .report-download-btn {
+            background: var(--accent); color: var(--bg); border: none;
+            padding: 8px 20px; border-radius: 8px; cursor: pointer;
+            font-size: 12px; font-weight: 800; font-family: inherit;
+        }
+        .report-download-btn:hover { opacity: 0.85; }
+        @media (max-width: 520px) {
+            .report-detail-overlay { padding: 0; align-items: flex-end; }
+            .report-detail-card { border-radius: 16px 16px 0 0; max-height: 92vh; max-width: 100%; }
+            .archive-grid { grid-template-columns: 1fr; }
+            .mail-view-tabs { margin-left: 0; width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -662,6 +788,24 @@
                 <option value="">Move to…</option>
             </select>
             <button class="mail-detail-del" id="md-del">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- REPORT DETAIL OVERLAY -->
+<div class="report-detail-overlay hidden" id="report-detail-overlay" onclick="if(event.target===this) closeReportDetail()">
+    <div class="report-detail-card">
+        <div class="report-detail-header">
+            <div>
+                <div class="report-detail-title" id="rd-title"></div>
+                <div class="report-detail-meta" id="rd-meta"></div>
+            </div>
+            <button class="report-detail-close" onclick="closeReportDetail()">×</button>
+        </div>
+        <div class="report-detail-body" id="rd-body"></div>
+        <div class="report-detail-footer">
+            <button class="report-download-btn" onclick="downloadCurrentReport()">Download TXT</button>
+            <button class="modal-cancel-btn" onclick="closeReportDetail()">Close</button>
         </div>
     </div>
 </div>
@@ -752,14 +896,20 @@
 
 <div id="tab-mail" class="tab-panel hidden">
 
-<div class="mail-scan-bar">
+<div class="mail-action-bar">
     <button class="scan-btn" id="scan-btn" onclick="document.getElementById('mail-file-input').click()">Scan Mail</button>
+    <button class="prioritize-btn" id="prioritize-btn" onclick="prioritizeMail()">Prioritize Mail</button>
     <span class="scan-status" id="scan-status"></span>
     <input type="file" id="mail-file-input" accept="image/*" capture="environment" style="display:none"
         onchange="if(this.files[0]) handleMailImage(this.files[0])">
+    <div class="mail-view-tabs">
+        <button class="mail-view-tab active" data-mailview="inbox" onclick="switchMailView('inbox')">Inbox</button>
+        <button class="mail-view-tab" data-mailview="archive" onclick="switchMailView('archive')">Archive</button>
+        <button class="mail-view-tab" data-mailview="reports" onclick="switchMailView('reports')">Reports</button>
+    </div>
 </div>
 
-<div class="mail-board">
+<div id="mail-view-inbox" class="mail-board">
     <div class="kanban-col" id="mail-col-inbox">
         <div class="kanban-col-header">
             <span class="kanban-col-title">Inbox</span>
@@ -788,6 +938,18 @@
         </div>
         <div class="kanban-col-body" id="mail-body-done"></div>
     </div>
+</div>
+
+<div id="mail-view-archive" class="archive-view" style="display:none">
+    <div class="archive-header">
+        <span>Archived Mail</span>
+        <span class="col-count" id="archive-count">0</span>
+    </div>
+    <div class="archive-grid" id="archive-items"></div>
+</div>
+
+<div id="mail-view-reports" class="reports-view" style="display:none">
+    <div id="reports-content"></div>
 </div>
 
 </div><!-- #tab-mail -->
@@ -887,6 +1049,7 @@ async function initApp() {
     dataLoaded = true;
     renderKanban();
     await loadMailItems();
+    loadReports();
     renderMailKanban();
     const savedTab = localStorage.getItem('roci_active_tab');
     if (savedTab && savedTab !== 'productivity') switchTab(savedTab);
@@ -1414,7 +1577,7 @@ function toggleTheme() {
 // ── MAIL & BILLS ──────────────────────────────────────────────
 let mailItems = [];
 const MAIL_STATUSES = ['inbox', 'review', 'action', 'done'];
-const MAIL_STATUS_LABELS = { inbox: 'Inbox', review: 'In Review', action: 'Needs Action', done: 'Done' };
+const MAIL_STATUS_LABELS = { inbox: 'Inbox', review: 'In Review', action: 'Needs Action', done: 'Done', archived: 'Archive' };
 
 function switchTab(name) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
@@ -1700,8 +1863,8 @@ function openMailDetail(id) {
     const badges = document.getElementById('md-badges');
     badges.innerHTML = '';
     const pb = document.createElement('span');
-    pb.className = 'mail-priority ' + item.priority;
-    pb.textContent = { high: 'High Priority', medium: 'Medium', low: 'Low' }[item.priority] || item.priority;
+    pb.className = 'mail-priority ' + getPriorityClass(item.priority);
+    pb.textContent = getPriorityLabel(item.priority);
     badges.appendChild(pb);
     if (d.is_past_due) {
         const od = document.createElement('span');
@@ -1746,8 +1909,9 @@ function openMailDetail(id) {
 
     // Footer
     const sel = document.getElementById('md-move');
+    const allMoveOpts = [...MAIL_STATUSES, 'archived'];
     sel.innerHTML = '<option value="">Move to…</option>' +
-        MAIL_STATUSES.filter(s => s !== item.status)
+        allMoveOpts.filter(s => s !== item.status)
             .map(s => `<option value="${escHtml(s)}">${escHtml(MAIL_STATUS_LABELS[s])}</option>`).join('');
     sel.onchange = () => { if (sel.value) { updateMailStatus(id, sel.value); closeMailDetail(); } };
 
@@ -1773,8 +1937,8 @@ function makeMailCard(item) {
     const top = document.createElement('div');
     top.className = 'mail-card-top';
     const badge = document.createElement('span');
-    badge.className = 'mail-priority ' + item.priority;
-    badge.textContent = { high: 'High Priority', medium: 'Medium', low: 'Low' }[item.priority] || item.priority;
+    badge.className = 'mail-priority ' + getPriorityClass(item.priority);
+    badge.textContent = getPriorityLabel(item.priority);
     const cat = document.createElement('span');
     cat.className = 'mail-category';
     cat.textContent = item.category;
@@ -1826,8 +1990,9 @@ function makeMailCard(item) {
     footer.className = 'mail-card-footer';
     const sel = document.createElement('select');
     sel.className = 'mail-move-select';
+    const moveOpts = [...MAIL_STATUSES, 'archived'];
     sel.innerHTML = '<option value="">Move to…</option>' +
-        MAIL_STATUSES.filter(s => s !== item.status)
+        moveOpts.filter(s => s !== item.status)
             .map(s => `<option value="${escHtml(s)}">${escHtml(MAIL_STATUS_LABELS[s])}</option>`)
             .join('');
     sel.onchange = () => { if (sel.value) { updateMailStatus(item.id, sel.value); sel.value = ''; } };
@@ -1842,8 +2007,325 @@ function makeMailCard(item) {
     return card;
 }
 
+// ── MAIL PRIORITIZATION & REPORTS ────────────────────────────
+let mailReports = [];
+let currentMailView = 'inbox';
+let currentReportId = null;
+
+function getPriorityClass(priority) {
+    const map = {
+        'high': 'high', 'medium': 'medium', 'low': 'low',
+        'High Priority': 'high', 'Medium Priority': 'medium', 'Low Priority': 'low',
+        'Informational': 'informational', 'Archive': 'archive-cand',
+    };
+    return map[priority] || 'low';
+}
+
+function getPriorityLabel(priority) {
+    const map = {
+        'high': 'High Priority', 'medium': 'Medium Priority', 'low': 'Low Priority',
+        'High Priority': 'High Priority', 'Medium Priority': 'Medium Priority',
+        'Low Priority': 'Low Priority', 'Informational': 'Informational', 'Archive': 'Archive',
+    };
+    return map[priority] || priority || 'Unknown';
+}
+
+function switchMailView(view) {
+    currentMailView = view;
+    document.querySelectorAll('.mail-view-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mailview === view);
+    });
+    document.getElementById('mail-view-inbox').style.display   = view === 'inbox'   ? '' : 'none';
+    document.getElementById('mail-view-archive').style.display = view === 'archive' ? '' : 'none';
+    document.getElementById('mail-view-reports').style.display = view === 'reports' ? '' : 'none';
+    if (view === 'archive') renderArchive();
+    if (view === 'reports') renderReportsList();
+}
+
+async function prioritizeMail() {
+    const btn = document.getElementById('prioritize-btn');
+    const statusEl = document.getElementById('scan-status');
+    const nonArchived = mailItems.filter(i => i.status !== 'archived');
+
+    if (!nonArchived.length) {
+        statusEl.textContent = mailItems.length
+            ? 'All mail is archived — nothing to prioritize.'
+            : 'No mail items to prioritize.';
+        setTimeout(() => { statusEl.textContent = ''; }, 4000);
+        return;
+    }
+
+    btn.disabled = true;
+    statusEl.textContent = 'Analyzing ' + nonArchived.length + ' mail items…';
+
+    try {
+        const resp = await fetch('/.netlify/functions/prioritize-mail', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mailItems: nonArchived }),
+            signal: AbortSignal.timeout(90000),
+        });
+
+        if (!resp.ok) {
+            let msg = 'Could not generate mail priority report. Please try again.';
+            try { const b = await resp.json(); if (b.error) msg = b.error; } catch {}
+            throw new Error(msg);
+        }
+
+        const result = await resp.json();
+        if (!result || typeof result !== 'object') throw new Error('Invalid response from server.');
+
+        const report = {
+            id: crypto.randomUUID(),
+            createdAt: new Date().toISOString(),
+            title: result.title || ('Mail Priority Report — ' + new Date().toLocaleDateString()),
+            summary: result.summary || '',
+            itemsScanned: result.itemsScanned || nonArchived.length,
+            fullReportText: result.fullReportText || '',
+            structuredResults: result,
+            mailItemIdsScanned: nonArchived.map(i => i.id),
+        };
+
+        mailReports.unshift(report);
+        saveReportsLocal();
+
+        if (Array.isArray(result.priorityUpdates)) {
+            result.priorityUpdates.forEach(({ id, priority }) => {
+                const item = mailItems.find(i => i.id === id);
+                if (item && priority) {
+                    item.priority = priority;
+                    if (currentUser && currentToken && location.protocol !== 'file:') {
+                        fetch(`${SUPABASE_URL}/rest/v1/mail_items?id=eq.${id}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${currentToken}`,
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ priority }),
+                        }).catch(() => {});
+                    }
+                }
+            });
+            saveMailLocal();
+            renderMailKanban();
+        }
+
+        statusEl.textContent = 'Report saved — ' + report.itemsScanned + ' items reviewed.';
+        setTimeout(() => { statusEl.textContent = ''; }, 5000);
+        switchMailView('reports');
+    } catch(e) {
+        statusEl.textContent = e.message || 'Could not generate mail priority report. Please try again.';
+        setTimeout(() => { statusEl.textContent = ''; }, 7000);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function renderArchive() {
+    const container = document.getElementById('archive-items');
+    const archived = mailItems.filter(i => i.status === 'archived');
+    document.getElementById('archive-count').textContent = archived.length;
+    container.innerHTML = '';
+    if (!archived.length) {
+        container.innerHTML = '<div class="kanban-empty">No archived mail items.</div>';
+        return;
+    }
+    archived.forEach(item => container.appendChild(makeMailCard(item)));
+}
+
+function renderReportsList() {
+    const container = document.getElementById('reports-content');
+    container.innerHTML = '';
+
+    if (!mailReports.length) {
+        container.innerHTML = '<div class="reports-empty">No reports yet. Click "Prioritize Mail" to generate your first report.</div>';
+        return;
+    }
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;';
+
+    const table = document.createElement('table');
+    table.className = 'reports-table';
+    table.innerHTML = `<thead><tr>
+        <th>Date</th><th>Report</th><th style="text-align:center">Items Scanned</th><th></th>
+    </tr></thead>`;
+
+    const tbody = document.createElement('tbody');
+    mailReports.forEach(report => {
+        const tr = document.createElement('tr');
+        const date = new Date(report.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        tr.innerHTML = `
+            <td style="color:var(--muted);white-space:nowrap;">${escHtml(date)}</td>
+            <td>${escHtml(report.title)}</td>
+            <td style="color:var(--muted);text-align:center;">${report.itemsScanned}</td>
+            <td style="text-align:right;">
+                <button class="report-go-btn" onclick="openReport('${escHtml(report.id)}')">Go to Report</button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    container.appendChild(wrap);
+}
+
+function openReport(id) {
+    const report = mailReports.find(r => r.id === id);
+    if (!report) return;
+    currentReportId = id;
+    const result = report.structuredResults || {};
+
+    document.getElementById('rd-title').textContent = report.title;
+    document.getElementById('rd-meta').textContent =
+        'Generated ' + new Date(report.createdAt).toLocaleString() + ' · ' + report.itemsScanned + ' items scanned';
+
+    const body = document.getElementById('rd-body');
+    body.innerHTML = '';
+
+    function addSection(title) {
+        const el = document.createElement('div');
+        el.className = 'report-section-title';
+        el.textContent = title;
+        body.appendChild(el);
+    }
+
+    if (report.summary) {
+        addSection('Summary');
+        const p = document.createElement('p');
+        p.style.cssText = 'font-size:13px;color:var(--text);line-height:1.6;margin:0 0 4px;';
+        p.textContent = report.summary;
+        body.appendChild(p);
+    }
+
+    const highItems = result.highestPriorityItems || [];
+    if (highItems.length) {
+        addSection('Priority Items');
+        highItems.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'report-priority-item';
+            div.innerHTML = `
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+                    <span class="mail-priority ${getPriorityClass(item.recommendedPriority || '')}" style="font-size:9px;">${escHtml(item.recommendedPriority || '')}</span>
+                    <span class="report-item-sender">${escHtml(item.sender || '')}</span>
+                </div>
+                ${item.reason ? `<div class="report-item-reason">${escHtml(item.reason)}</div>` : ''}
+                ${item.recommendedAction ? `<div class="report-item-action">→ ${escHtml(item.recommendedAction)}</div>` : ''}`;
+            body.appendChild(div);
+        });
+    }
+
+    const archiveCandidates = result.archiveCandidates || [];
+    if (archiveCandidates.length) {
+        addSection('Archive Candidates (Recommendations Only)');
+        archiveCandidates.forEach(ac => {
+            const found = mailItems.find(i => i.id === ac.id);
+            const div = document.createElement('div');
+            div.className = 'report-priority-item';
+            div.innerHTML = `
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+                    <span class="mail-priority archive-cand" style="font-size:9px;">Archive</span>
+                    <span class="report-item-sender">${escHtml(found ? found.vendor : (ac.id || 'Unknown'))}</span>
+                </div>
+                ${ac.reason ? `<div class="report-item-reason">${escHtml(ac.reason)}</div>` : ''}`;
+            body.appendChild(div);
+        });
+    }
+
+    const improvements = result.processImprovements || [];
+    if (improvements.length) {
+        addSection('Process Improvement Suggestions');
+        const ul = document.createElement('ul');
+        ul.style.cssText = 'margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;';
+        improvements.forEach(tip => {
+            const li = document.createElement('li');
+            li.style.cssText = 'font-size:12px;color:var(--text);line-height:1.5;';
+            li.textContent = tip;
+            ul.appendChild(li);
+        });
+        body.appendChild(ul);
+    }
+
+    if (report.fullReportText) {
+        addSection('Full Report');
+        const pre = document.createElement('div');
+        pre.className = 'report-full-text';
+        pre.textContent = report.fullReportText;
+        body.appendChild(pre);
+    }
+
+    document.getElementById('report-detail-overlay').classList.remove('hidden');
+}
+
+function closeReportDetail() {
+    document.getElementById('report-detail-overlay').classList.add('hidden');
+    currentReportId = null;
+}
+
+function downloadCurrentReport() {
+    const report = mailReports.find(r => r.id === currentReportId);
+    if (!report) return;
+    const result = report.structuredResults || {};
+    const date = new Date(report.createdAt).toISOString().slice(0, 10);
+
+    let txt = report.title + '\n' + '='.repeat(Math.min(report.title.length, 60)) + '\n\n';
+    txt += 'Generated: ' + new Date(report.createdAt).toLocaleString() + '\n';
+    txt += 'Items Scanned: ' + report.itemsScanned + '\n\n';
+
+    if (report.summary) {
+        txt += 'SUMMARY\n' + '-'.repeat(40) + '\n' + report.summary + '\n\n';
+    }
+
+    const highItems = result.highestPriorityItems || [];
+    if (highItems.length) {
+        txt += 'PRIORITY ITEMS\n' + '-'.repeat(40) + '\n';
+        highItems.forEach(item => {
+            txt += `\n[${item.recommendedPriority || ''}] ${item.sender || ''}\n`;
+            if (item.reason) txt += 'Reason: ' + item.reason + '\n';
+            if (item.recommendedAction) txt += 'Action: ' + item.recommendedAction + '\n';
+        });
+        txt += '\n';
+    }
+
+    const archiveCandidates = result.archiveCandidates || [];
+    if (archiveCandidates.length) {
+        txt += 'ARCHIVE CANDIDATES (Recommendations Only)\n' + '-'.repeat(40) + '\n';
+        archiveCandidates.forEach(ac => {
+            const found = mailItems.find(i => i.id === ac.id);
+            txt += `\n${found ? found.vendor : ac.id}\n`;
+            if (ac.reason) txt += 'Reason: ' + ac.reason + '\n';
+        });
+        txt += '\n';
+    }
+
+    const improvements = result.processImprovements || [];
+    if (improvements.length) {
+        txt += 'PROCESS IMPROVEMENT SUGGESTIONS\n' + '-'.repeat(40) + '\n';
+        improvements.forEach((tip, i) => { txt += `${i + 1}. ${tip}\n`; });
+        txt += '\n';
+    }
+
+    if (report.fullReportText) {
+        txt += 'FULL REPORT\n' + '-'.repeat(40) + '\n' + report.fullReportText + '\n';
+    }
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain' }));
+    a.download = `mail-priority-report-${date}.txt`;
+    a.click();
+}
+
+function saveReportsLocal() {
+    localStorage.setItem('rocinante_mail_reports_v1', JSON.stringify(mailReports));
+}
+
+function loadReports() {
+    const raw = localStorage.getItem('rocinante_mail_reports_v1');
+    if (raw) { try { mailReports = JSON.parse(raw); } catch(e) { mailReports = []; } }
+}
+
 // ── INIT ──────────────────────────────────────────────────────
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeMailDetail(); hideTagDropdown(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeMailDetail(); closeReportDetail(); hideTagDropdown(); } });
 document.addEventListener('click', e => {
     const bar = document.getElementById('kanban-add-bar');
     if (bar && !bar.contains(e.target)) hideTagDropdown();
