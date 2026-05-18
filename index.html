@@ -2115,8 +2115,13 @@ async function prioritizeMail() {
         setTimeout(() => { statusEl.textContent = ''; }, 5000);
         switchMailView('reports');
     } catch(e) {
-        statusEl.textContent = e.message || 'Could not generate mail priority report. Please try again.';
-        setTimeout(() => { statusEl.textContent = ''; }, 7000);
+        const errMsg = e.message || 'Could not generate mail priority report. Please try again.';
+        console.error('[prioritizeMail]', errMsg, e);
+        statusEl.textContent = errMsg;
+        statusEl.style.color = 'var(--danger)';
+        statusEl.title = 'Click to dismiss';
+        statusEl.style.cursor = 'pointer';
+        statusEl.onclick = () => { statusEl.textContent = ''; statusEl.style.color = ''; statusEl.style.cursor = ''; statusEl.onclick = null; };
     } finally {
         btn.disabled = false;
     }
