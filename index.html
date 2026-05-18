@@ -2042,7 +2042,93 @@ function switchMailView(view) {
     if (view === 'reports') renderReportsList();
 }
 
-async function prioritizeMail() {
+function assignPriority(item) {
+    const d = item.details || {};
+    const text = `${item.vendor || ''} ${item.summary || ''}`.toLowerCase();
+
+    // Immediate red flags
+    if (d.is_past_due || d.late_fees > 0) return 'High Priority';
+
+    // High-stakes sender / notice keywords
+    if (/\b(irs|comptroller|franchise\s*tax|dept\.?\s*of\s*revenue|department\s*of\s*revenue|secretary\s*of\s*state|tax\s*(notice|payment|due|lien|bill)|delinquent|collection\s*agenc|collections\s*dept|attorney|law\s*(firm|office)|court\s*(notice|order|document)|judgment|lien|notice\s*of\s*default|penalty\s*notice|government\s*notice|compliance\s*notice|legal\s*notice|notice\s*to\s*pay)\b/.test(text)) {
+        return 'High Priority';
+    }
+
+    // Regular bills with amounts — act this week
+    if (item.amount > 0) {
+        if (item.category === 'Medical Bills' || item.category === 'Hospital Bills') return 'Medium Priority';
+        if (item.category === 'Regular Bills' || item.is_recurring) return 'Medium Priority';
+        if (item.due_date) return 'Medium Priority';
+        return 'Low Priority';
+    }
+
+    // Has a due date but no dollar amount
+    if (item.due_date) return 'Low Priority';
+
+    // Marketing / junk signals — suggest archive but keep as Low
+    if (/\b(unsubscribe|marketing|promotion|advertisement|newsletter|limited\s*offer|sale\s*ends|coupon|discount\s*code)\b/.test(text)) {
+        return 'Low Priority';
+    }
+
+    return 'Informational';
+}
+
+function runLocalPrioritization(items) {
+    const PRIORITY_ORDER = { 'High Priority': 0, 'Medium Priority': 1, 'Low Priority': 2, 'Informational': 3 };
+    const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const priorityUpdates = items.map(item => ({ id: item.id, priority: assignPriority(item) }));
+
+    const counts = { 'High Priority': 0, 'Medium Priority': 0, 'Low Priority': 0, 'Informational': 0 };
+    priorityUpdates.forEach(u => { if (counts[u.priority] !== undefined) counts[u.priority]++; });
+
+    let summary = '';
+    if (counts['High Priority'])   summary += `${counts['High Priority']} item${counts['High Priority'] > 1 ? 's' : ''} need immediate attention. `;
+    if (counts['Medium Priority']) summary += `${counts['Medium Priority']} item${counts['Medium Priority'] > 1 ? 's' : ''} should be handled this week. `;
+    if (counts['Informational'])   summary += `${counts['Informational']} item${counts['Informational'] > 1 ? 's are' : ' is'} informational with no action required.`;
+    if (!summary) summary = `${items.length} mail items reviewed. No urgent items found.`;
+
+    const highestPriorityItems = priorityUpdates
+        .slice()
+        .sort((a, b) => (PRIORITY_ORDER[a.priority] ?? 9) - (PRIORITY_ORDER[b.priority] ?? 9))
+        .map(u => {
+            const item = items.find(i => i.id === u.id);
+            const d = item ? (item.details || {}) : {};
+            let reason = '';
+            if (d.is_past_due)   reason = 'Item is past due.';
+            else if (d.late_fees > 0) reason = `Late fee of $${Number(d.late_fees).toFixed(2)} present.`;
+            else if (item && item.amount > 0 && item.due_date) reason = `Bill of $${Number(item.amount).toFixed(2)} due ${item.due_date}.`;
+            else if (item && item.amount > 0) reason = `Outstanding balance of $${Number(item.amount).toFixed(2)}.`;
+            return { id: u.id, sender: item ? item.vendor : u.id, recommendedPriority: u.priority, reason, recommendedAction: '' };
+        });
+
+    const archiveCandidates = priorityUpdates
+        .filter(u => {
+            const item = items.find(i => i.id === u.id);
+            if (!item) return false;
+            const text = `${item.vendor || ''} ${item.summary || ''}`.toLowerCase();
+            return u.priority === 'Informational' && /\b(unsubscribe|marketing|promotion|newsletter|advertisement)\b/.test(text);
+        })
+        .map(u => ({ id: u.id, reason: 'Appears to be marketing or promotional mail with no action required.' }));
+
+    const processImprovements = [
+        'Add specific government and tax agency names to the high-priority keyword list as new ones appear in your mail.',
+        'Track payment confirmation dates on items marked Done to build a history of paid bills.',
+        'Consider adding a "Vendor Type" field during scanning to improve automatic categorization for new sender types.',
+    ];
+
+    return {
+        title: `Mail Priority Report — ${dateStr}`,
+        summary: summary.trim(),
+        itemsScanned: items.length,
+        priorityUpdates,
+        highestPriorityItems,
+        archiveCandidates,
+        processImprovements,
+    };
+}
+
+function prioritizeMail() {
     const btn = document.getElementById('prioritize-btn');
     const statusEl = document.getElementById('scan-status');
     const nonArchived = mailItems.filter(i => i.status !== 'archived');
@@ -2056,43 +2142,17 @@ async function prioritizeMail() {
     }
 
     btn.disabled = true;
-    statusEl.textContent = 'Analyzing ' + nonArchived.length + ' mail items…';
+    statusEl.textContent = 'Prioritizing ' + nonArchived.length + ' mail items…';
 
     try {
-        const resp = await fetch('/.netlify/functions/prioritize-mail', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mailItems: nonArchived }),
-            signal: AbortSignal.timeout(90000),
-        });
-
-        if (!resp.ok) {
-            let msg = 'Could not generate mail priority report. Please try again.';
-            try { const b = await resp.json(); if (b.error) msg = b.error; } catch {}
-            throw new Error(msg);
-        }
-
-        const result = await resp.json();
-        if (!result || typeof result !== 'object') throw new Error('Invalid response from server.');
-
-        // Build highestPriorityItems client-side from the compact priorityUpdates list
-        const priorityOrder = { 'High Priority': 0, 'Medium Priority': 1, 'Low Priority': 2, 'Informational': 3 };
-        result.title = result.title || ('Mail Priority Report — ' + new Date().toLocaleDateString());
-        result.itemsScanned = nonArchived.length;
-        result.highestPriorityItems = (result.priorityUpdates || [])
-            .slice()
-            .sort((a, b) => (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9))
-            .map(u => {
-                const item = nonArchived.find(i => i.id === u.id);
-                return { id: u.id, sender: item ? item.vendor : u.id, recommendedPriority: u.priority, reason: '', recommendedAction: '' };
-            });
+        const result = runLocalPrioritization(nonArchived);
 
         const report = {
             id: crypto.randomUUID(),
             createdAt: new Date().toISOString(),
-            title: result.title || ('Mail Priority Report — ' + new Date().toLocaleDateString()),
-            summary: result.summary || '',
-            itemsScanned: result.itemsScanned || nonArchived.length,
+            title: result.title,
+            summary: result.summary,
+            itemsScanned: result.itemsScanned,
             fullReportText: buildReportText(result, nonArchived),
             structuredResults: result,
             mailItemIdsScanned: nonArchived.map(i => i.id),
@@ -2101,39 +2161,34 @@ async function prioritizeMail() {
         mailReports.unshift(report);
         saveReportsLocal();
 
-        if (Array.isArray(result.priorityUpdates)) {
-            result.priorityUpdates.forEach(({ id, priority }) => {
-                const item = mailItems.find(i => i.id === id);
-                if (item && priority) {
-                    item.priority = priority;
-                    if (currentUser && currentToken && location.protocol !== 'file:') {
-                        fetch(`${SUPABASE_URL}/rest/v1/mail_items?id=eq.${id}`, {
-                            method: 'PATCH',
-                            headers: {
-                                'apikey': SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${currentToken}`,
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ priority }),
-                        }).catch(() => {});
-                    }
+        result.priorityUpdates.forEach(({ id, priority }) => {
+            const item = mailItems.find(i => i.id === id);
+            if (item && priority) {
+                item.priority = priority;
+                if (currentUser && currentToken && location.protocol !== 'file:') {
+                    fetch(`${SUPABASE_URL}/rest/v1/mail_items?id=eq.${id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${currentToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ priority }),
+                    }).catch(() => {});
                 }
-            });
-            saveMailLocal();
-            renderMailKanban();
-        }
+            }
+        });
+        saveMailLocal();
+        renderMailKanban();
 
-        statusEl.textContent = 'Report saved — ' + report.itemsScanned + ' items reviewed.';
-        setTimeout(() => { statusEl.textContent = ''; }, 5000);
+        statusEl.textContent = 'Done — ' + result.itemsScanned + ' items prioritized.';
+        setTimeout(() => { statusEl.textContent = ''; }, 4000);
         switchMailView('reports');
     } catch(e) {
-        const errMsg = e.message || 'Could not generate mail priority report. Please try again.';
-        console.error('[prioritizeMail]', errMsg, e);
-        statusEl.textContent = errMsg;
+        console.error('[prioritizeMail]', e);
+        statusEl.textContent = 'Prioritization failed: ' + (e.message || 'unknown error');
         statusEl.style.color = 'var(--danger)';
-        statusEl.title = 'Click to dismiss';
-        statusEl.style.cursor = 'pointer';
-        statusEl.onclick = () => { statusEl.textContent = ''; statusEl.style.color = ''; statusEl.style.cursor = ''; statusEl.onclick = null; };
+        statusEl.onclick = () => { statusEl.textContent = ''; statusEl.style.color = ''; statusEl.onclick = null; };
     } finally {
         btn.disabled = false;
     }
