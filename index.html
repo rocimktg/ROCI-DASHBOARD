@@ -1623,7 +1623,7 @@ function toggleTheme() {
 // ── MAIL & BILLS ──────────────────────────────────────────────
 let mailItems = [];
 const MAIL_STATUSES = ['inbox', 'review', 'action', 'done'];
-const MAIL_STATUS_LABELS = { inbox: 'Inbox', review: 'In Review', action: 'Needs Action', done: 'Done', archived: 'Archive' };
+const MAIL_STATUS_LABELS = { inbox: 'Inbox', review: 'In Review', action: 'Needs Action', done: 'Done', archived: 'Archive', tax: 'Tax', rocinante: 'Rocinante' };
 
 function switchTab(name) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
@@ -1955,25 +1955,11 @@ function openMailDetail(id) {
 
     // Footer
     const sel = document.getElementById('md-move');
-    const allMoveOpts = [...MAIL_STATUSES, 'archived'];
-    const curTag = item.details?.manualTag || null;
+    const allMoveOpts = [...new Set([...MAIL_STATUSES, 'done', 'archived', 'tax', 'rocinante'])];
     sel.innerHTML = '<option value="">Move to…</option>' +
         allMoveOpts.filter(s => s !== item.status)
-            .map(s => `<option value="${escHtml(s)}">${escHtml(MAIL_STATUS_LABELS[s])}</option>`).join('') +
-        '<option value="" disabled>──────</option>' +
-        (curTag !== 'tax'       ? '<option value="tag:tax">Tag: Tax</option>' : '') +
-        (curTag !== 'rocinante' ? '<option value="tag:rocinante">Tag: Rocinante</option>' : '') +
-        (curTag                 ? '<option value="tag:none">Remove Tag</option>' : '');
-    sel.onchange = () => {
-        if (!sel.value) return;
-        if (sel.value.startsWith('tag:')) {
-            setMailTag(id, sel.value === 'tag:none' ? null : sel.value.slice(4));
-            closeMailDetail();
-        } else {
-            updateMailStatus(id, sel.value);
-            closeMailDetail();
-        }
-    };
+            .map(s => `<option value="${escHtml(s)}">${escHtml(MAIL_STATUS_LABELS[s])}</option>`).join('');
+    sel.onchange = () => { if (sel.value) { updateMailStatus(id, sel.value); closeMailDetail(); } };
 
     document.getElementById('md-del').onclick = () => { closeMailDetail(); deleteMailItem(id); };
 
@@ -2075,25 +2061,12 @@ function makeMailCard(item) {
     footer.className = 'mail-card-footer';
     const sel = document.createElement('select');
     sel.className = 'mail-move-select';
-    const moveOpts = [...MAIL_STATUSES, 'archived'];
-    const curTag = item.details?.manualTag || null;
+    const moveOpts = [...MAIL_STATUSES, 'done', 'archived', 'tax', 'rocinante'];
     sel.innerHTML = '<option value="">Move to…</option>' +
-        moveOpts.filter(s => s !== item.status)
+        [...new Set(moveOpts)].filter(s => s !== item.status)
             .map(s => `<option value="${escHtml(s)}">${escHtml(MAIL_STATUS_LABELS[s])}</option>`)
-            .join('') +
-        '<option value="" disabled>──────</option>' +
-        (curTag !== 'tax'       ? '<option value="tag:tax">Tag: Tax</option>' : '') +
-        (curTag !== 'rocinante' ? '<option value="tag:rocinante">Tag: Rocinante</option>' : '') +
-        (curTag                 ? '<option value="tag:none">Remove Tag</option>' : '');
-    sel.onchange = () => {
-        if (!sel.value) return;
-        if (sel.value.startsWith('tag:')) {
-            setMailTag(item.id, sel.value === 'tag:none' ? null : sel.value.slice(4));
-        } else {
-            updateMailStatus(item.id, sel.value);
-        }
-        sel.value = '';
-    };
+            .join('');
+    sel.onchange = () => { if (sel.value) { updateMailStatus(item.id, sel.value); sel.value = ''; } };
     const paidBtn = document.createElement('button');
     paidBtn.className = 'mail-paid-btn';
     const isPaid = !!(item.details && item.details.is_paid);
@@ -2254,7 +2227,7 @@ function runLocalPrioritization(items) {
 function prioritizeMail() {
     const btn = document.getElementById('prioritize-btn');
     const statusEl = document.getElementById('scan-status');
-    const nonArchived = mailItems.filter(i => i.status !== 'archived');
+    const nonArchived = mailItems.filter(i => !['archived', 'tax', 'rocinante'].includes(i.status));
 
     if (!nonArchived.length) {
         statusEl.textContent = mailItems.length
@@ -2347,7 +2320,7 @@ function setMailTag(id, tag) {
 
 function renderRocinanteView() {
     const container = document.getElementById('rocinante-items');
-    const items = mailItems.filter(i => i.status !== 'archived' && isRocinanteItem(i));
+    const items = mailItems.filter(i => i.status === 'rocinante');
     document.getElementById('rocinante-count').textContent = items.length;
     container.innerHTML = '';
     if (!items.length) {
@@ -2359,7 +2332,7 @@ function renderRocinanteView() {
 
 function renderTaxView() {
     const container = document.getElementById('tax-items');
-    const taxItems = mailItems.filter(i => i.status !== 'archived' && isTaxItem(i));
+    const taxItems = mailItems.filter(i => i.status === 'tax');
     document.getElementById('tax-count').textContent = taxItems.length;
     container.innerHTML = '';
     if (!taxItems.length) {
