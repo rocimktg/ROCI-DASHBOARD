@@ -1956,10 +1956,24 @@ function openMailDetail(id) {
     // Footer
     const sel = document.getElementById('md-move');
     const allMoveOpts = [...MAIL_STATUSES, 'archived'];
+    const curTag = item.details?.manualTag || null;
     sel.innerHTML = '<option value="">Move to…</option>' +
         allMoveOpts.filter(s => s !== item.status)
-            .map(s => `<option value="${escHtml(s)}">${escHtml(MAIL_STATUS_LABELS[s])}</option>`).join('');
-    sel.onchange = () => { if (sel.value) { updateMailStatus(id, sel.value); closeMailDetail(); } };
+            .map(s => `<option value="${escHtml(s)}">${escHtml(MAIL_STATUS_LABELS[s])}</option>`).join('') +
+        '<option value="" disabled>──────</option>' +
+        (curTag !== 'tax'       ? '<option value="tag:tax">Tag: Tax</option>' : '') +
+        (curTag !== 'rocinante' ? '<option value="tag:rocinante">Tag: Rocinante</option>' : '') +
+        (curTag                 ? '<option value="tag:none">Remove Tag</option>' : '');
+    sel.onchange = () => {
+        if (!sel.value) return;
+        if (sel.value.startsWith('tag:')) {
+            setMailTag(id, sel.value === 'tag:none' ? null : sel.value.slice(4));
+            closeMailDetail();
+        } else {
+            updateMailStatus(id, sel.value);
+            closeMailDetail();
+        }
+    };
 
     document.getElementById('md-del').onclick = () => { closeMailDetail(); deleteMailItem(id); };
 
@@ -2062,11 +2076,24 @@ function makeMailCard(item) {
     const sel = document.createElement('select');
     sel.className = 'mail-move-select';
     const moveOpts = [...MAIL_STATUSES, 'archived'];
+    const curTag = item.details?.manualTag || null;
     sel.innerHTML = '<option value="">Move to…</option>' +
         moveOpts.filter(s => s !== item.status)
             .map(s => `<option value="${escHtml(s)}">${escHtml(MAIL_STATUS_LABELS[s])}</option>`)
-            .join('');
-    sel.onchange = () => { if (sel.value) { updateMailStatus(item.id, sel.value); sel.value = ''; } };
+            .join('') +
+        '<option value="" disabled>──────</option>' +
+        (curTag !== 'tax'       ? '<option value="tag:tax">Tag: Tax</option>' : '') +
+        (curTag !== 'rocinante' ? '<option value="tag:rocinante">Tag: Rocinante</option>' : '') +
+        (curTag                 ? '<option value="tag:none">Remove Tag</option>' : '');
+    sel.onchange = () => {
+        if (!sel.value) return;
+        if (sel.value.startsWith('tag:')) {
+            setMailTag(item.id, sel.value === 'tag:none' ? null : sel.value.slice(4));
+        } else {
+            updateMailStatus(item.id, sel.value);
+        }
+        sel.value = '';
+    };
     const paidBtn = document.createElement('button');
     paidBtn.className = 'mail-paid-btn';
     const isPaid = !!(item.details && item.details.is_paid);
@@ -2132,7 +2159,7 @@ function switchMailView(view) {
 const TAX_PATTERN = /\b(irs|comptroller|franchise\s*tax|dept\.?\s*of\s*revenue|department\s*of\s*revenue|secretary\s*of\s*state|tax\s*(notice|payment|due|lien|bill|return|refund|assessment)|property\s*tax|sales\s*tax|income\s*tax|payroll\s*tax|w-?2\b|1099\b|schedule\s*[a-z]\b|form\s*\d{4})\b/i;
 
 function isTaxItem(item) {
-    return TAX_PATTERN.test(`${item.vendor || ''} ${item.summary || ''}`);
+    return TAX_PATTERN.test(`${item.vendor || ''} ${item.summary || ''}`) || item.details?.manualTag === 'tax';
 }
 
 function assignPriority(item) {
@@ -2293,7 +2320,29 @@ function prioritizeMail() {
 const ROCINANTE_PATTERN = /rocinante\s*(marketing)?(,?\s*llc)?/i;
 
 function isRocinanteItem(item) {
-    return ROCINANTE_PATTERN.test(`${item.vendor || ''} ${item.summary || ''}`);
+    return ROCINANTE_PATTERN.test(`${item.vendor || ''} ${item.summary || ''}`) || item.details?.manualTag === 'rocinante';
+}
+
+function setMailTag(id, tag) {
+    const item = mailItems.find(i => i.id === id);
+    if (!item) return;
+    item.details = item.details || {};
+    item.details.manualTag = tag || null;
+    saveMailLocal();
+    renderMailKanban();
+    if (currentMailView === 'tax')       renderTaxView();
+    if (currentMailView === 'rocinante') renderRocinanteView();
+    if (currentUser && currentToken && location.protocol !== 'file:') {
+        fetch(`${SUPABASE_URL}/rest/v1/mail_items?id=eq.${id}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${currentToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ details: item.details }),
+        }).catch(() => {});
+    }
 }
 
 function renderRocinanteView() {
