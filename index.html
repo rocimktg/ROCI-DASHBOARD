@@ -2075,6 +2075,18 @@ async function prioritizeMail() {
         const result = await resp.json();
         if (!result || typeof result !== 'object') throw new Error('Invalid response from server.');
 
+        // Build highestPriorityItems client-side from the compact priorityUpdates list
+        const priorityOrder = { 'High Priority': 0, 'Medium Priority': 1, 'Low Priority': 2, 'Informational': 3 };
+        result.title = result.title || ('Mail Priority Report — ' + new Date().toLocaleDateString());
+        result.itemsScanned = nonArchived.length;
+        result.highestPriorityItems = (result.priorityUpdates || [])
+            .slice()
+            .sort((a, b) => (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9))
+            .map(u => {
+                const item = nonArchived.find(i => i.id === u.id);
+                return { id: u.id, sender: item ? item.vendor : u.id, recommendedPriority: u.priority, reason: '', recommendedAction: '' };
+            });
+
         const report = {
             id: crypto.randomUUID(),
             createdAt: new Date().toISOString(),

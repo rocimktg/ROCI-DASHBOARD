@@ -27,50 +27,35 @@ exports.handler = async (event) => {
 
   const today = new Date().toISOString().slice(0, 10);
 
-  const itemsText = mailItems.map((item, i) => {
+  // One compact line per item keeps input tokens small
+  const itemsText = mailItems.map(item => {
     const d = item.details || {};
-    return [
-      `--- Item ${i + 1} ---`,
-      `ID: ${item.id}`,
-      `Sender/Vendor: ${item.vendor || 'Unknown'}`,
-      `Summary: ${item.summary || 'N/A'}`,
-      `Category: ${item.category || 'N/A'}`,
-      `Current Priority: ${item.priority || 'N/A'}`,
-      `Current Status: ${item.status || 'N/A'}`,
-      `Amount Due: ${item.amount != null ? '$' + Number(item.amount).toFixed(2) : 'N/A'}`,
-      `Due Date: ${item.due_date || 'N/A'}`,
-      `Past Due: ${d.is_past_due ? 'YES' : 'No'}`,
-      `Recurring: ${item.is_recurring ? 'Yes' : 'No'}`,
-      `Late Fees: ${d.late_fees > 0 ? '$' + Number(d.late_fees).toFixed(2) : 'None'}`,
-      `Billing Period: ${d.billing_period || 'N/A'}`,
-    ].join('\n');
-  }).join('\n\n');
+    const amt   = item.amount != null ? `$${Number(item.amount).toFixed(2)}` : 'no amount';
+    const due   = item.due_date || 'no due date';
+    const flags = [
+      d.is_past_due         ? 'PAST DUE'  : null,
+      d.late_fees > 0       ? `late fee $${Number(d.late_fees).toFixed(2)}` : null,
+      item.is_recurring     ? 'recurring' : null,
+    ].filter(Boolean).join(', ');
+    return `ID:${item.id} | ${item.vendor || 'Unknown'} | ${amt} | due:${due}${flags ? ' | ' + flags : ''} | ${item.summary || ''}`;
+  }).join('\n');
 
-  const prompt = `Today is ${today}. Prioritize these ${mailItems.length} mail items for a business owner. Return ONLY valid JSON, no markdown.
+  const prompt = `Today is ${today}. Assign a priority to each of these ${mailItems.length} mail items. Return ONLY compact JSON.
 
 ITEMS:
 ${itemsText}
 
-PRIORITY RULES (apply in order):
-1. HIGH PRIORITY: Tax/IRS/government notices, legal, collections, past-due with fees, penalties, service disruption threats
-2. MEDIUM PRIORITY: Utilities, insurance, subscriptions, medical bills, credit cards, vendor bills
-3. LOW PRIORITY: Recurring bills before due date, non-urgent vendors
-4. INFORMATIONAL: Zero-balance statements, EXPLICITLY confirmed paid/autopaid/complete/done items, notices requiring no action
+PRIORITY RULES:
+HIGH: tax/IRS/government, legal, collections, past-due with fees, penalties, service threats
+MEDIUM: utilities, insurance, medical, subscriptions, credit cards, vendor bills
+LOW: recurring bills before due date, non-urgent
+INFORMATIONAL: zero-balance, explicitly paid/autopaid/complete/done, no action needed
+RULE: Never assume paid unless the item explicitly says paid/autopaid/complete/done. When uncertain, go higher.
 
-CRITICAL: Never assume paid unless item explicitly says paid/autopaid/complete/done. When uncertain, use higher priority.
+Return this exact JSON (no markdown, no extra text):
+{"summary":"2 sentences on most urgent items","priorityUpdates":[{"id":"exact_id_from_above","priority":"High Priority"}],"archiveCandidates":[{"id":"exact_id","reason":"why"}],"processImprovements":["tip1","tip2","tip3"]}
 
-Return this JSON (no extra text):
-{
-  "title": "Mail Priority Report — ${today}",
-  "summary": "2-3 sentences on the most urgent items and overall status",
-  "itemsScanned": ${mailItems.length},
-  "highestPriorityItems": [{"id":"exact_id","sender":"name","recommendedPriority":"High Priority","reason":"one sentence","recommendedAction":"one sentence"}],
-  "priorityUpdates": [{"id":"exact_id","priority":"High Priority"}],
-  "archiveCandidates": [{"id":"exact_id","reason":"one sentence"}],
-  "processImprovements": ["suggestion 1","suggestion 2","suggestion 3"]
-}
-
-Rules: Include ALL ${mailItems.length} items in priorityUpdates. Order highestPriorityItems most-to-least urgent. Priority values must be exactly: "High Priority", "Medium Priority", "Low Priority", or "Informational".`;
+ALL ${mailItems.length} items must appear in priorityUpdates. Priority values: "High Priority" "Medium Priority" "Low Priority" "Informational"`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -82,7 +67,7 @@ Rules: Include ALL ${mailItems.length} items in priorityUpdates. Order highestPr
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 800,
+        max_tokens: 400,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
