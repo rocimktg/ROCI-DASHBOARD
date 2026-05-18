@@ -743,6 +743,33 @@
             font-size: 12px; font-weight: 800; font-family: inherit;
         }
         .report-download-btn:hover { opacity: 0.85; }
+        /* PAID BUTTON */
+        .mail-paid-btn {
+            background: transparent; border: 1px solid var(--success); color: var(--success);
+            padding: 3px 8px; border-radius: 6px; cursor: pointer;
+            font-size: 10px; font-weight: 700; font-family: inherit; white-space: nowrap; flex-shrink: 0;
+        }
+        .mail-paid-btn:hover:not(:disabled) { background: rgba(122,158,110,0.18); }
+        .mail-paid-btn:disabled { opacity: 0.7; cursor: default; }
+        .mail-detail-paid {
+            background: transparent; border: 1px solid var(--success); color: var(--success);
+            padding: 8px 14px; border-radius: 8px; cursor: pointer;
+            font-size: 12px; font-weight: 700; font-family: inherit; white-space: nowrap;
+        }
+        .mail-detail-paid:hover:not(:disabled) { background: rgba(122,158,110,0.18); }
+        .mail-detail-paid:disabled { opacity: 0.7; cursor: default; }
+
+        /* TAX VIEW */
+        .tax-view {
+            flex: 1; min-height: 0; overflow-y: auto; padding: 4px 0;
+            display: flex; flex-direction: column;
+        }
+        .tax-header {
+            display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1px; color: #a855f7; padding: 4px 2px 10px;
+        }
+
         @media (max-width: 520px) {
             .report-detail-overlay { padding: 0; align-items: flex-end; }
             .report-detail-card { border-radius: 16px 16px 0 0; max-height: 92vh; max-width: 100%; }
@@ -787,6 +814,7 @@
             <select class="mail-detail-move" id="md-move">
                 <option value="">Move to…</option>
             </select>
+            <button class="mail-detail-paid" id="md-paid">Mark Paid</button>
             <button class="mail-detail-del" id="md-del">Delete</button>
         </div>
     </div>
@@ -904,6 +932,7 @@
         onchange="if(this.files[0]) handleMailImage(this.files[0])">
     <div class="mail-view-tabs">
         <button class="mail-view-tab active" data-mailview="inbox" onclick="switchMailView('inbox')">Inbox</button>
+        <button class="mail-view-tab" data-mailview="tax" onclick="switchMailView('tax')">Tax</button>
         <button class="mail-view-tab" data-mailview="archive" onclick="switchMailView('archive')">Archive</button>
         <button class="mail-view-tab" data-mailview="reports" onclick="switchMailView('reports')">Reports</button>
     </div>
@@ -938,6 +967,14 @@
         </div>
         <div class="kanban-col-body" id="mail-body-done"></div>
     </div>
+</div>
+
+<div id="mail-view-tax" class="tax-view" style="display:none">
+    <div class="tax-header">
+        <span>Tax Items</span>
+        <span class="col-count" id="tax-count">0</span>
+    </div>
+    <div class="archive-grid" id="tax-items"></div>
 </div>
 
 <div id="mail-view-archive" class="archive-view" style="display:none">
@@ -1917,6 +1954,31 @@ function openMailDetail(id) {
 
     document.getElementById('md-del').onclick = () => { closeMailDetail(); deleteMailItem(id); };
 
+    const mdPaid = document.getElementById('md-paid');
+    if (d.is_paid) {
+        mdPaid.textContent = '✓ Paid ' + new Date(d.paid_at).toLocaleDateString();
+        mdPaid.disabled = true;
+    } else {
+        mdPaid.textContent = 'Mark Paid';
+        mdPaid.disabled = false;
+        mdPaid.onclick = () => { markMailPaid(id); closeMailDetail(); };
+    }
+
+    // Show paid date in body rows if paid
+    if (d.is_paid && d.paid_at) {
+        const row = document.createElement('div');
+        row.className = 'mail-detail-row';
+        const l = document.createElement('span');
+        l.className = 'mail-detail-label';
+        l.textContent = 'Paid On';
+        const v = document.createElement('span');
+        v.className = 'mail-detail-value';
+        v.style.color = 'var(--success)';
+        v.textContent = new Date(d.paid_at).toLocaleString();
+        row.append(l, v);
+        body.appendChild(row);
+    }
+
     document.getElementById('mail-detail-overlay').classList.remove('hidden');
 }
 
@@ -1996,12 +2058,24 @@ function makeMailCard(item) {
             .map(s => `<option value="${escHtml(s)}">${escHtml(MAIL_STATUS_LABELS[s])}</option>`)
             .join('');
     sel.onchange = () => { if (sel.value) { updateMailStatus(item.id, sel.value); sel.value = ''; } };
+    const paidBtn = document.createElement('button');
+    paidBtn.className = 'mail-paid-btn';
+    const isPaid = !!(item.details && item.details.is_paid);
+    if (isPaid) {
+        const pd = new Date(item.details.paid_at).toLocaleDateString();
+        paidBtn.textContent = '✓ ' + pd;
+        paidBtn.disabled = true;
+        paidBtn.title = 'Paid on ' + pd;
+    } else {
+        paidBtn.textContent = 'Mark Paid';
+        paidBtn.onclick = e => { e.stopPropagation(); markMailPaid(item.id); };
+    }
     const del = document.createElement('button');
     del.className = 'card-del-btn';
     del.textContent = '×';
     del.title = 'Delete';
     del.onclick = () => deleteMailItem(item.id);
-    footer.append(sel, del);
+    footer.append(sel, paidBtn, del);
 
     card.append(top, body, footer);
     return card;
@@ -2036,15 +2110,26 @@ function switchMailView(view) {
         btn.classList.toggle('active', btn.dataset.mailview === view);
     });
     document.getElementById('mail-view-inbox').style.display   = view === 'inbox'   ? '' : 'none';
+    document.getElementById('mail-view-tax').style.display     = view === 'tax'     ? '' : 'none';
     document.getElementById('mail-view-archive').style.display = view === 'archive' ? '' : 'none';
     document.getElementById('mail-view-reports').style.display = view === 'reports' ? '' : 'none';
+    if (view === 'tax')     renderTaxView();
     if (view === 'archive') renderArchive();
     if (view === 'reports') renderReportsList();
+}
+
+const TAX_PATTERN = /\b(irs|comptroller|franchise\s*tax|dept\.?\s*of\s*revenue|department\s*of\s*revenue|secretary\s*of\s*state|tax\s*(notice|payment|due|lien|bill|return|refund|assessment)|property\s*tax|sales\s*tax|income\s*tax|payroll\s*tax|w-?2\b|1099\b|schedule\s*[a-z]\b|form\s*\d{4})\b/i;
+
+function isTaxItem(item) {
+    return TAX_PATTERN.test(`${item.vendor || ''} ${item.summary || ''}`);
 }
 
 function assignPriority(item) {
     const d = item.details || {};
     const text = `${item.vendor || ''} ${item.summary || ''}`.toLowerCase();
+
+    // Confirmed paid — always informational
+    if (d.is_paid) return 'Informational';
 
     // Immediate red flags
     if (d.is_past_due || d.late_fees > 0) return 'High Priority';
@@ -2191,6 +2276,42 @@ function prioritizeMail() {
         statusEl.onclick = () => { statusEl.textContent = ''; statusEl.style.color = ''; statusEl.onclick = null; };
     } finally {
         btn.disabled = false;
+    }
+}
+
+function renderTaxView() {
+    const container = document.getElementById('tax-items');
+    const taxItems = mailItems.filter(i => i.status !== 'archived' && isTaxItem(i));
+    document.getElementById('tax-count').textContent = taxItems.length;
+    container.innerHTML = '';
+    if (!taxItems.length) {
+        container.innerHTML = '<div class="kanban-empty">No tax-related mail items found.</div>';
+        return;
+    }
+    taxItems.forEach(item => container.appendChild(makeMailCard(item)));
+}
+
+async function markMailPaid(id) {
+    const item = mailItems.find(i => i.id === id);
+    if (!item || item.details?.is_paid) return;
+    item.details = item.details || {};
+    item.details.is_paid = true;
+    item.details.paid_at = new Date().toISOString();
+    item.status = 'done';
+    saveMailLocal();
+    renderMailKanban();
+    if (currentMailView === 'tax')     renderTaxView();
+    if (currentMailView === 'archive') renderArchive();
+    if (currentUser && currentToken && location.protocol !== 'file:') {
+        fetch(`${SUPABASE_URL}/rest/v1/mail_items?id=eq.${id}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${currentToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: 'done', details: item.details }),
+        }).catch(() => {});
     }
 }
 
